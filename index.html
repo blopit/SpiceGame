@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <title>Spice it Up</title>
+    </head>
+    <style>
+    .center{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -300px;
+        margin-left: -400px;
+    }​
+    </style>
+    <body style="background-color: green;">
+        <div>
+            <button id="id">Open SVG</button>
+            <h2 id="fps" style="color: yellow;">0</h2>
+        </div>
+        <div class="center">
+            <input id="svg" type="file" name="svg" style="display: none;" />
+            <canvas id="screen"></canvas>
+        </div>
+
+
+        <script src="JS/lib/jquery-1.11.3.js"></script>
+        <script src="JS/main.js"></script>
+
+    </body>
+</html>
