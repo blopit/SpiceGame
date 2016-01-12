@@ -13,8 +13,8 @@ function player(x, y, width, height) {
     this.afric = 0.2;
     this.acc = 0.8;
     this.stopjumpspeed = 2.5;
-    this.maxspeed = 6;
-    this.maxAllSpeeds = 40;
+    this.maxhsp = 6;
+    this.maxspeed = 40;
 
     this.vacc = 0;
     this.hacc = 0;
@@ -30,7 +30,7 @@ function player(x, y, width, height) {
         awidth: 900,
         aheight: 1080,
         image: image,
-        numberOfFrames: 8,
+        numberframes: 8,
         xoff: 48*1.25,
         yoff: 60*1.25,
         vert: true
@@ -53,7 +53,7 @@ player.prototype.update = function (b, keys) {
 
     var fr = 0;
     this.vsp += grav;
-    var grounded = COLL_Place(this,b,1,2,-2,0);
+    var grounded = colPlace(this,b,1,2,-2,0);
     if (!grounded){
 
 
@@ -72,12 +72,12 @@ player.prototype.update = function (b, keys) {
     }
 
     if (keys[2] && !keys[3]){
-        if (this.hsp>-this.maxspeed) {
+        if (this.hsp>-this.maxhsp) {
             this.hsp-=this.acc;
             this.xscale = -1;
         }
     }else if (keys[3] && !keys[2]){
-        if (this.hsp<this.maxspeed) {
+        if (this.hsp<this.maxhsp) {
             this.hsp+=this.acc;
             this.xscale = 1;
         }
@@ -88,30 +88,30 @@ player.prototype.update = function (b, keys) {
     if (this.hsp === 0){
         this.frame = 5;
     }else{
-        this.frame += 0.25 * this.hsp/this.maxspeed * this.xscale;
+        this.frame += 0.25 * this.hsp/this.maxhsp * this.xscale;
     }
-    if (!COLL_Place(this,b,1,4,-2,0) && !grounded){
+    if (!colPlace(this,b,1,4,-2,0) && !grounded){
         if (this.vsp < 0)
             this.frame = 6;
         else
             this.frame = 0;
     }
 
-    if (Math.abs(this.hsp) > this.maxAllSpeeds) {
-        this.hsp = this.maxAllSpeeds * Math.sign(this.hsp)
+    if (Math.abs(this.hsp) > this.maxspeed) {
+        this.hsp = this.maxspeed * Math.sign(this.hsp)
     }
-    if (Math.abs(this.vsp) > this.maxAllSpeeds) {
-        this.vsp = this.maxAllSpeeds * Math.sign(this.vsp)
+    if (Math.abs(this.vsp) > this.maxspeed) {
+        this.vsp = this.maxspeed * Math.sign(this.vsp)
     }
 
-    slope_move(this,b,this.climb);
+    slopeMove(this,b,this.climb);
 
     var camdx = this.x + 64*this.xscale;
     var camdy = this.y;
     var dist = distPoints(camdx,camdy,camx,camy);
     var dir = anglePoints(camx,camy,camdx,camdy);
-    camx += dist*Math.cos(dir)*camSpring;
-    camy += dist*Math.sin(dir)*camSpring;
+    camx += dist*Math.cos(dir)*cam_spring;
+    camy += dist*Math.sin(dir)*cam_spring;
 
 
 

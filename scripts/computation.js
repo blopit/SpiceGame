@@ -42,23 +42,23 @@ function fric(q,fr){
 //rect1 = rectangle checking, b = list of objects to test against
 //w and h are optional width and height adjustments
 //TODO: make this return the object collided with
-function COLL_Place(rect1, b, x, y, w, h){
+function colPlace(rect1, b, x, y, w, h){
     var w = w || 0;
     var h = h || 0;
 
     //adjusted rectangle
-    var rectX = {x: rect1.x+x, y: rect1.y+y, width: rect1.width+w, height: rect1.height+h};
+    var rectx = {x: rect1.x+x, y: rect1.y+y, width: rect1.width+w, height: rect1.height+h};
 
     for (var i = 0; i < b.length; i++) {
         if (b[i].bound === "rect"){
             //check rect collision with rect and make sure b[i] is not the object being tested
-            if (COLL_RxR(rectX, b[i]) && rect1 != b[i]){
+            if (colRxR(rectx, b[i]) && rect1 != b[i]){
                 return true;
             }
         }else if (b[i].bound === "poly"){
             //the following breaks down a polygon to lines and checks rect collision with line
             count = b[i].xx.length;
-            if (!COLL_RxR(rectX, b[i]) && rect1 != b[i])
+            if (!colRxR(rectx, b[i]) && rect1 != b[i])
                 continue;
             for (var j = 0; j < count; j++){
                 var p1 = {x:b[i].xx[j], y:b[i].yy[j]};
@@ -69,16 +69,16 @@ function COLL_Place(rect1, b, x, y, w, h){
                 else
                     p2 = {x:b[i].xx[0], y:b[i].yy[0]};
 
-                if (COLL_RxL(rectX, p1, p2) && rect1 != b[i])
+                if (colRxL(rectx, p1, p2) && rect1 != b[i])
                     return true;
             }
         }else if (b[i].bound === "jt"){
             //Jumpthrough platforms are flattened to a height of 1px
             var p1 = {x:rect1.x+x, y:rect1.y+rect1.height+y};
             var p2 = {x:rect1.x+rect1.width+x, y:rect1.y+rect1.height+y};
-            var rectXX = {x: b[i].x, y:b[i].y+2, width: b[i].width, height:2};
+            var rectjt = {x: b[i].x, y:b[i].y+2, width: b[i].width, height:2};
 
-            if (COLL_RxL(rectXX, p1, p2) && rect1.vsp >= 0){
+            if (colRxL(rectjt, p1, p2) && rect1.vsp >= 0){
                 return true;
             }
         }
@@ -88,7 +88,7 @@ function COLL_Place(rect1, b, x, y, w, h){
 }
 
 //Rectangle collsion with Rectangle
-function COLL_RxR(rect1, rect2){
+function colRxR(rect1, rect2){
     return (rect1.x < rect2.x + rect2.width &&
         rect1.x + rect1.width > rect2.x &&
         rect1.y < rect2.y + rect2.height &&
@@ -96,7 +96,7 @@ function COLL_RxR(rect1, rect2){
 }
 
 //Rectangle collsion with line segment with endpoints p1,p2
-function COLL_RxL(rect, p1, p2) {
+function colRxL(rect, p1, p2) {
     var minX = p1.x;
     var maxX = p2.x;
 
@@ -173,10 +173,10 @@ function COLL_RxL(rect, p1, p2) {
 
 //simple movement
 //adjusts x and y of obj based on vertical and horizontal speeds
-function simp_move(obj,b){
+function simpMove(obj,b){
     if (obj.vsp > 0){
         for (var i = 0; i < obj.vsp*timefctr; i++){
-            if (!COLL_Place(obj,b,0,1)){
+            if (!colPlace(obj,b,0,1)){
                 obj.y += 1;
             }else{
                 obj.vsp = 0;
@@ -185,7 +185,7 @@ function simp_move(obj,b){
         }
     } else if (obj.vsp < 0){
         for (var i = 0; i < -obj.vsp*timefctr; i++){
-            if (!COLL_Place(obj,b,0,-1)){
+            if (!colPlace(obj,b,0,-1)){
                 obj.y -= 1;
             }else{
                 obj.vsp = 0;
@@ -195,7 +195,7 @@ function simp_move(obj,b){
     }
     if (obj.hsp > 0){
         for (var i = 0; i < obj.hsp*timefctr; i++){
-            if (!COLL_Place(obj,b,1,0)){
+            if (!colPlace(obj,b,1,0)){
                 obj.x += 1;
             }else{
                 obj.hsp -= obj.hsp;
@@ -204,7 +204,7 @@ function simp_move(obj,b){
         }
     } else if (obj.hsp < 0){
         for (var i = 0; i < -obj.hsp*timefctr; i++){
-            if (!COLL_Place(obj,b,-1,0)){
+            if (!colPlace(obj,b,-1,0)){
                 obj.x -= 1;
             }else{
                 obj.hsp -= obj.hsp;
@@ -217,19 +217,19 @@ function simp_move(obj,b){
 //sloped movement
 //adjusts x and y of obj based on vertical and horizontal speeds
 //factors in slopes
-function slope_move(obj,b,slope){
+function slopeMove(obj,b,slope){
 
     var done = false;
     if (obj.hsp > 0){
         for (var i = 0; i < obj.hsp*timefctr; i++){
             for (var s = -slope; s <= slope; s++){
-                if (s != 0 && !COLL_Place(obj,b,0,1))
+                if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
                 var xs = Math.cos(Math.atan2(-s,1));//1;
                 var ys = Math.sin(Math.atan2(-s,1));//-s;
 
-                if (!COLL_Place(obj,b,xs,ys)){
-                    if (s < 0 && !COLL_Place(obj,b,0,1))
+                if (!colPlace(obj,b,xs,ys)){
+                    if (s < 0 && !colPlace(obj,b,0,1))
                         continue;
                     obj.x += xs;
                     obj.y += ys;
@@ -245,13 +245,13 @@ function slope_move(obj,b,slope){
     } else if (obj.hsp < 0){
         for (var i = 0; i < -obj.hsp*timefctr; i++){
             for (var s = -slope; s <= slope; s++){
-                if (s != 0 && !COLL_Place(obj,b,0,1))
+                if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
                 var xs = Math.cos(Math.atan2(-s,-1));//-1;
                 var ys = Math.sin(Math.atan2(-s,-1));//-s;
 
-                if (!COLL_Place(obj,b,xs,ys)){
-                    if (s < 0 && !COLL_Place(obj,b,0,1))
+                if (!colPlace(obj,b,xs,ys)){
+                    if (s < 0 && !colPlace(obj,b,0,1))
                         continue;
                     obj.x += xs;
                     obj.y += ys;
@@ -268,14 +268,14 @@ function slope_move(obj,b,slope){
 
     if (obj.vsp > 0){
         for (var i = 0; i < obj.vsp*timefctr; i++){
-            if (!COLL_Place(obj,b,0,1)){
+            if (!colPlace(obj,b,0,1)){
                 obj.y += 1;
-            }else if (!COLL_Place(obj,b,1,1) && !done){
+            }else if (!colPlace(obj,b,1,1) && !done){
                 obj.y += 1;
                 obj.x += 1;
                 obj.vsp-=obj.fric*0.7;
                 if (obj.hsp < 0) obj.hsp = 0;
-            }else if (!COLL_Place(obj,b,-1,1) && !done){
+            }else if (!colPlace(obj,b,-1,1) && !done){
                 obj.y += 1;
                 obj.x -= 1;
                 obj.vsp-=obj.fric*0.7;
@@ -287,14 +287,14 @@ function slope_move(obj,b,slope){
         }
     } else if (obj.vsp < 0){
         for (var i = 0; i < -obj.vsp*timefctr; i++){
-            if (!COLL_Place(obj,b,0,-1)){
+            if (!colPlace(obj,b,0,-1)){
                 obj.y -= 1;
-            }else if (!COLL_Place(obj,b,1,-1) && !done){
+            }else if (!colPlace(obj,b,1,-1) && !done){
                 obj.y += 1;
                 obj.x += 1;
                 obj.vsp+=1;//obj.fric*0.7;
                 if (obj.hsp < 0) obj.hsp = 0;
-            }else if (!COLL_Place(obj,b,-1,-1) && !done){
+            }else if (!colPlace(obj,b,-1,-1) && !done){
                 obj.y += 1;
                 obj.x -= 1;
                 obj.vsp+=1;//obj.fric*0.7;

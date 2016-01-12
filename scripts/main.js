@@ -13,11 +13,11 @@ function require(jsFilePath) {
     document.body.appendChild(js);
 }
 
-require("JS/base_objects.js");
-require("JS/player.js");
-require("JS/svg.js");
-require("JS/computation.js");
-require("JS/sprite.js");
+require("scripts/base_objects.js");
+require("scripts/player.js");
+require("scripts/svg.js");
+require("scripts/computation.js");
+require("scripts/sprite.js");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -30,12 +30,12 @@ screenHeight = 600;
 //camera globals
 camx = 0;
 camy = 0;
-camSpring = 0.15; //speed factor camera snaps to player view
+cam_spring = 0.15; //speed factor camera snaps to player view
 
 //Global initializations
 time = 0;               //time increment
 list = [];
-XMLHTTP = null;
+xmlhttp = null;
 hero = null;  //player
 
 var fps = {
@@ -167,14 +167,14 @@ window.onload = function() {
     c.canvas.height = screenHeight;
 
     //load first level svg
-    XMLHTTP = new XMLHttpRequest();
-    XMLHTTP.open("GET", "levels/lvl0.svg", true);
-    XMLHTTP.onreadystatechange = function() {
-        if (XMLHTTP.readyState== 4 && XMLHTTP.status == 200) {
-          onLoadLevel(XMLHTTP.responseXML);
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", "levels/lvl0.svg", true);
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState== 4 && xmlhttp.status == 200) {
+          onLoadLevel(xmlhttp.responseXML);
         }
     };
-    XMLHTTP.send(null);
+    xmlhttp.send(null);
 
     //MAIN GAME LOOP
     setInterval(function() {

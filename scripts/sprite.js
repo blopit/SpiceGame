@@ -1,7 +1,7 @@
 function sprite (options) {
 
     var that = {},
-        numberOfFrames = options.numberOfFrames || 1,
+        numberframes = options.numberframes || 1,
         xoff = options.xoff || 0,
         yoff = options.yoff || 0;
 
@@ -14,10 +14,10 @@ function sprite (options) {
 
         that.render = function (c,x,y,frame,xscale,yscale) {
             while (frame < 0){
-                frame += numberOfFrames;
+                frame += numberframes;
             }
 
-            var f  = Math.floor(frame)%numberOfFrames;
+            var f  = Math.floor(frame)%numberframes;
             xscale = xscale || 1;
             yscale = yscale || 1;
 

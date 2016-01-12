@@ -75,8 +75,6 @@ instance.prototype.draw = function (c) {
 // polygon BLOCK
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
 function polyBlock(xx, yy) {
 
     var _x = Math.min.apply(Math,xx);
@@ -108,7 +106,6 @@ polyBlock.prototype.draw = function (c) {
     c.strokeStyle = "pink";
     c.rect(this.x,this.y,this.width,this.height);
     c.stroke();
-
 
 }
 
