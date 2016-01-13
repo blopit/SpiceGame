@@ -28,7 +28,7 @@ function extractPoints(data) {
 
     }
 
-    return new polyBlock(listx, listy);
+    return [listx, listy];
 }
 
 function parse(path) {

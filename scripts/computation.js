@@ -42,17 +42,24 @@ function fric(q,fr){
 //rect1 = rectangle checking, b = list of objects to test against
 //w and h are optional width and height adjustments
 //TODO: make this return the object collided with
-function colPlace(rect1, b, x, y, w, h){
+function colPlace(rect1, b, x, y, w, h, check_while_off){
     var w = w || 0;
     var h = h || 0;
+    var check_while_off = check_while_off || false;
+
 
     //adjusted rectangle
     var rectx = {x: rect1.x+x, y: rect1.y+y, width: rect1.width+w, height: rect1.height+h};
 
     for (var i = 0; i < b.length; i++) {
+        if (!b[i].on_screen && !check_while_off)
+            continue;
+
         if (b[i].bound === "rect"){
             //check rect collision with rect and make sure b[i] is not the object being tested
             if (colRxR(rectx, b[i]) && rect1 != b[i]){
+                //rect1.ahsp = b[i].hsp;
+                //rect1.avsp = b[i].vsp;
                 return true;
             }
         }else if (b[i].bound === "poly"){
@@ -141,29 +148,6 @@ function colRxL(rect, p1, p2) {
     if (minY > maxY)
         return false;
 
-    /* DW about this shhhhhhhhh
-    if (p1.x<p2.x ) {
-        if ((p2.x-p1.x)!=0){
-            var a = anglePoints(p1.x,p1.y,p2.x,p2.y);
-            var p = a+Math.PI/2;
-            cslope = Math.sin(a);
-            nslope = Math.cos(a);
-            pxsl = Math.cos(p);
-            pysl = Math.sin(p);
-        }
-    }
-    else{
-        if ((p1.x-p2.x)!=0){
-            var a = anglePoints(p2.x,p2.y,p1.x,p1.y);
-            var p = a+Math.PI/2;
-            cslope = Math.sin(a);
-            nslope = Math.cos(a);
-            pxsl = Math.cos(p);
-            pysl = Math.sin(p);
-
-        }
-    }*/
-
     return true;
 }
 
@@ -214,14 +198,13 @@ function simpMove(obj,b){
     }
 }
 
-//sloped movement
-//adjusts x and y of obj based on vertical and horizontal speeds
-//factors in slopes
-function slopeMove(obj,b,slope){
+function slopeMove(obj,b,slope,xsp,ysp){
+    var xsp = xsp || obj.hsp*timefctr;
+    var ysp = ysp || obj.vsp*timefctr;
 
     var done = false;
-    if (obj.hsp > 0){
-        for (var i = 0; i < obj.hsp*timefctr; i++){
+    if (xsp > 0){
+        for (var i = 0; i < xsp; i++){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
@@ -242,8 +225,8 @@ function slopeMove(obj,b,slope){
                 }
             }
         }
-    } else if (obj.hsp < 0){
-        for (var i = 0; i < -obj.hsp*timefctr; i++){
+    } else if (xsp < 0){
+        for (var i = 0; i < -xsp; i++){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
@@ -266,39 +249,125 @@ function slopeMove(obj,b,slope){
         }
     }
 
-    if (obj.vsp > 0){
-        for (var i = 0; i < obj.vsp*timefctr; i++){
+    if (ysp > 0){
+        for (var i = 0; i < ysp; i++){
             if (!colPlace(obj,b,0,1)){
                 obj.y += 1;
             }else if (!colPlace(obj,b,1,1) && !done){
-                obj.y += 1;
-                obj.x += 1;
-                obj.vsp-=obj.fric*0.7;
-                if (obj.hsp < 0) obj.hsp = 0;
+                obj.y += 0.7;
+                obj.x += 0.7;
             }else if (!colPlace(obj,b,-1,1) && !done){
-                obj.y += 1;
-                obj.x -= 1;
-                obj.vsp-=obj.fric*0.7;
-                if (obj.hsp > 0) obj.hsp = 0;
+                obj.y += 0.7;
+                obj.x -= 0.7;
             }else{
                 obj.vsp = 0;
                 break;
             }
         }
-    } else if (obj.vsp < 0){
-        for (var i = 0; i < -obj.vsp*timefctr; i++){
+    } else if (ysp < 0){
+        for (var i = 0; i < -ysp; i++){
             if (!colPlace(obj,b,0,-1)){
                 obj.y -= 1;
             }else if (!colPlace(obj,b,1,-1) && !done){
-                obj.y += 1;
-                obj.x += 1;
-                obj.vsp+=1;//obj.fric*0.7;
-                if (obj.hsp < 0) obj.hsp = 0;
+                obj.y -= 0.7;
+                obj.x += 0.7;
             }else if (!colPlace(obj,b,-1,-1) && !done){
-                obj.y += 1;
-                obj.x -= 1;
-                obj.vsp+=1;//obj.fric*0.7;
-                if (obj.hsp > 0) obj.hsp = 0;
+                obj.y -= 0.7;
+                obj.x -= 0.7;
+            }else{
+                obj.vsp = 0;
+                break;
+            }
+        }
+    }
+
+}
+
+//sloped movement
+//adjusts x and y of obj based on vertical and horizontal speeds
+//factors in slopes
+function slopeMicroMove(obj,b,slope,xsp,ysp){
+    var xsp = xsp || obj.hsp*timefctr;
+    var ysp = ysp || obj.vsp*timefctr;
+
+    var multiplex = 10;
+    xsp *= multiplex;
+    ysp *= multiplex;
+    ysp = Math.round(ysp);
+    xsp = Math.round(xsp);
+
+    var done = false;
+    if (xsp > 0){
+        for (var i = 0; i < xsp; i++){
+            for (var s = -slope; s <= slope; s++){
+                if (s != 0 && !colPlace(obj,b,0,1))
+                    continue;
+                var xs = 1/multiplex;//1;
+                var ys = -s/multiplex;//-s;
+
+                if (!colPlace(obj,b,xs,ys)){
+                    if (s < 0 && !colPlace(obj,b,0,1))
+                        continue;
+                    obj.x += xs;
+                    obj.y += ys;
+                    if (s!=0)
+                        done = true;
+                    break;
+                }else if (s>=slope){
+                    obj.hsp = -obj.hsp*obj.bnc;
+                    break;
+                }
+            }
+        }
+    } else if (xsp < 0){
+        for (var i = 0; i < -xsp; i++){
+            for (var s = -slope; s <= slope; s++){
+                if (s != 0 && !colPlace(obj,b,0,1))
+                    continue;
+                var xs = -1/multiplex;//-1;
+                var ys = -s/multiplex;//-s;
+
+                if (!colPlace(obj,b,xs,ys)){
+                    if (s < 0 && !colPlace(obj,b,0,1))
+                        continue;
+                    obj.x += xs;
+                    obj.y += ys;
+                    if (s!=0)
+                        done = true;
+                    break;
+                }else if (s>=slope){
+                    obj.hsp = -obj.hsp*obj.bnc;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (ysp > 0){
+        for (var i = 0; i < ysp; i++){
+            if (!colPlace(obj,b,0,1/multiplex)){
+                obj.y += 1/multiplex;
+            }else if (!colPlace(obj,b,1/multiplex,1/multiplex) && !done){
+                obj.y += 1/multiplex;
+                obj.x += 1/multiplex;
+            }else if (!colPlace(obj,b,-1/multiplex,1/multiplex) && !done){
+                obj.y += 1/multiplex;
+                obj.x -= 1/multiplex;
+            }else{
+                obj.vsp = 0;
+                break;
+            }
+        }
+    } else if (ysp < 0){
+        for (var i = 0; i < -ysp; i++){
+            if (!colPlace(obj,b,0,-1/multiplex)){
+                obj.y -= 1/multiplex;
+            }else if (!colPlace(obj,b,1/multiplex,-1/multiplex) && !done){
+                obj.y -= 1/multiplex;
+                obj.x += 1/multiplex;
+            }else if (!colPlace(obj,b,-1/multiplex,-1/multiplex) && !done){
+                obj.y -= 1/multiplex;
+                obj.x -= 1/multiplex;
             }else{
                 obj.vsp = 0;
                 break;

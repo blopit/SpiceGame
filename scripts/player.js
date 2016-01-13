@@ -6,20 +6,16 @@
 
 function player(x, y, width, height) {
     instance.call(this, x, y, width, height);
-    this.jump = 13;
-    this.climb = 2;
-    this.angle = 0;
-    this.fric = 0.3;
-    this.afric = 0.2;
-    this.acc = 0.8;
-    this.stopjumpspeed = 2.5;
-    this.maxhsp = 6;
-    this.maxspeed = 40;
+    this.jump = 13;             //jump velocity
+    this.climb = 2;             //max pixel slope climb
+    this.fric = 0.65;           //ground fric
+    this.afric = 0.3;           //airfric
+    this.acc = 0.8;             //acceleration
+    this.stopjumpspeed = 2.5;   //speed at which to accelerate to stop jumping
+    this.maxhsp = 8;            //max horizontal speed
+    this.maxspeed = 40;         //max any speed
 
-    this.vacc = 0;
-    this.hacc = 0;
-
-    this.xscale = 1;
+    this.xscale = 1;            //horizontal scale
 
     var image = new Image();
     image.src = "http://i.imgur.com/26loGzM.png";
@@ -35,6 +31,8 @@ function player(x, y, width, height) {
         yoff: 60*1.25,
         vert: true
     });
+    this.ahsp = 0;
+    this.avsp = 0;
 }
 
 player.prototype.draw = function (c) {
@@ -48,15 +46,15 @@ player.prototype.draw = function (c) {
 
 player.prototype.update = function (b, keys) {
 
-    this.vacc = 0;
-    this.hacc = 0;
-
     var fr = 0;
+    this.ahsp = 0;
+    this.avsp = 0;
+
+    //apply gravity
     this.vsp += grav;
+
     var grounded = colPlace(this,b,1,2,-2,0);
     if (!grounded){
-
-
         fr = this.afric;
     }else{
         fr = this.fric;
@@ -103,7 +101,6 @@ player.prototype.update = function (b, keys) {
     if (Math.abs(this.vsp) > this.maxspeed) {
         this.vsp = this.maxspeed * Math.sign(this.vsp)
     }
-
     slopeMove(this,b,this.climb);
 
     var camdx = this.x + 64*this.xscale;
