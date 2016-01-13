@@ -115,7 +115,7 @@ function checkColour(elem, col) {
 //Load an XML document (xmlDoc)
 function onLoadLevel(xmlDoc) {
     var x = xmlDoc.getElementsByTagName("rect");
-    var obj_missing_path = null;
+    var obj_missing_path = [];
     for (i = 0; i < x.length; i++) {
         if (x[i].style.fill === "rgb(0, 0, 0)" || checkColour(x[i],"#000000")){
             list.push(new objt(
@@ -140,13 +140,15 @@ function onLoadLevel(xmlDoc) {
             Math.floor(x[i].getAttribute("height"))
             ));
         }else if (x[i].style.fill === "rgb(0, 0, 255)" || checkColour(x[i],"#0000FF")){
-            obj_missing_path = new moveBlock(
+            var obj = new moveBlock(
             Math.floor(x[i].getAttribute("x")),
             Math.floor(x[i].getAttribute("y")),
             Math.floor(x[i].getAttribute("width")),
             Math.floor(x[i].getAttribute("height"))
-            )
-            list.push(obj_missing_path);
+            );
+            obj_missing_path.push(obj);
+            list.push(obj);
+            console.log("blok");
         }else if (x[i].style.fill === "none"){
             if (x[i].style.stroke === "rgb(255, 0, 0)" || checkColour(x[i],"#FF0000")){
                 cam.boundaries.push(new camBoundary(
@@ -183,8 +185,10 @@ function onLoadLevel(xmlDoc) {
                 var p = extractPoints(parse(path));
                 var mp = new movePath(p[0],p[1],parseInt(x[i].style.strokeWidth,10));
                 list.push(mp);
+                console.log("path");
                 if (obj_missing_path){
-                    obj_missing_path.path = mp;
+                    obj_missing_path[0].path = mp;
+                    obj_missing_path.shift();
                 }
             }
         }

@@ -112,10 +112,11 @@ polyBlock.prototype.draw = function (c) {
     c.closePath();
     c.fill();
 
-    c.beginPath();
+    //uncomment to draw bounding
+    /*c.beginPath();
     c.strokeStyle = "pink";
     c.rect(this.x,this.y,this.width,this.height);
-    c.stroke();
+    c.stroke();*/
 
 }
 
@@ -237,11 +238,16 @@ function movePath(xx, yy, speed) {
 movePath.prototype.draw = function (c) {
 
     c.strokeStyle = "lime";
+    c.lineWidth = 2; // Lines 4px wide, dots of diameter 4
+
     c.beginPath();
-    c.moveTo(this.xx[0], this.yy[0]);
+    var cx = this.xx[0];
+    var cy = this.yy[0];
 
     for (var i = 1; i < this.xx.length; i++){
-        c.lineTo(this.xx[i], this.yy[i]);
+        c.dashedLine(cx, cy, this.xx[i], this.yy[i],[7,10]);
+        cx = this.xx[i];
+        cy = this.yy[i];
     }
     c.stroke();
 

@@ -1,4 +1,32 @@
 ////////////////////////////////////////////////////////////////////////////////
+// Drawing Functions
+////////////////////////////////////////////////////////////////////////////////
+
+var CP = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
+if (CP.lineTo) {
+    CP.dashedLine = function(x, y, x2, y2, da) {
+        if (!da) da = [10,5];
+        this.save();
+        var dx = (x2-x), dy = (y2-y);
+        var len = Math.sqrt(dx*dx + dy*dy);
+        var rot = Math.atan2(dy, dx);
+        this.translate(x, y);
+        this.moveTo(0, 0);
+        this.rotate(rot);
+        var dc = da.length;
+        var di = 0, draw = true;
+        x = 0;
+        while (len > x) {
+            x += da[di++ % dc];
+            if (x > len) x = len;
+            draw ? this.lineTo(x, 0): this.moveTo(x, 0);
+            draw = !draw;
+        }
+        this.restore();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Math Functions
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -287,13 +315,13 @@ function slopeMove(obj,b,slope,xsp,ysp){
 //adjusts x and y of obj based on vertical and horizontal speeds
 //factors in slopes
 //USE FOR MICRO MOVEMENTS ONLY such as to steady self on moving platforms
-function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
+function slopeMicroMove(obj,b,slope,xsp,ysp,multiplier){
     var xsp = xsp || obj.hsp*timefctr;
     var ysp = ysp || obj.vsp*timefctr;
-    var multiplex = multiplex || 10;
+    var multiplier = multiplier || 10;
 
-    xsp *= multiplex;
-    ysp *= multiplex;
+    xsp *= multiplier;
+    ysp *= multiplier;
     ysp = Math.round(ysp);
     xsp = Math.round(xsp);
 
@@ -303,8 +331,8 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
-                var xs = 1/multiplex;
-                var ys = -s/multiplex;
+                var xs = 1/multiplier;
+                var ys = -s/multiplier;
 
                 if (!colPlace(obj,b,xs,ys)){
                     if (s < 0 && !colPlace(obj,b,0,1))
@@ -325,8 +353,8 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
-                var xs = -1/multiplex;
-                var ys = -s/multiplex;
+                var xs = -1/multiplier;
+                var ys = -s/multiplier;
 
                 if (!colPlace(obj,b,xs,ys)){
                     if (s < 0 && !colPlace(obj,b,0,1))
@@ -346,14 +374,14 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
 
     if (ysp > 0){
         for (var i = 0; i < ysp; i++){
-            if (!colPlace(obj,b,0,1/multiplex)){
-                obj.y += 1/multiplex;
-            }else if (!colPlace(obj,b,1/multiplex,1/multiplex) && !done){
-                obj.y += 1/multiplex;
-                obj.x += 1/multiplex;
-            }else if (!colPlace(obj,b,-1/multiplex,1/multiplex) && !done){
-                obj.y += 1/multiplex;
-                obj.x -= 1/multiplex;
+            if (!colPlace(obj,b,0,1/multiplier)){
+                obj.y += 1/multiplier;
+            }else if (!colPlace(obj,b,1/multiplier,1/multiplier) && !done){
+                obj.y += 1/multiplier;
+                obj.x += 1/multiplier;
+            }else if (!colPlace(obj,b,-1/multiplier,1/multiplier) && !done){
+                obj.y += 1/multiplier;
+                obj.x -= 1/multiplier;
             }else{
                 obj.vsp = 0;
                 break;
@@ -361,14 +389,14 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
         }
     } else if (ysp < 0){
         for (var i = 0; i < -ysp; i++){
-            if (!colPlace(obj,b,0,-1/multiplex)){
-                obj.y -= 1/multiplex;
-            }else if (!colPlace(obj,b,1/multiplex,-1/multiplex) && !done){
-                obj.y -= 1/multiplex;
-                obj.x += 1/multiplex;
-            }else if (!colPlace(obj,b,-1/multiplex,-1/multiplex) && !done){
-                obj.y -= 1/multiplex;
-                obj.x -= 1/multiplex;
+            if (!colPlace(obj,b,0,-1/multiplier)){
+                obj.y -= 1/multiplier;
+            }else if (!colPlace(obj,b,1/multiplier,-1/multiplier) && !done){
+                obj.y -= 1/multiplier;
+                obj.x += 1/multiplier;
+            }else if (!colPlace(obj,b,-1/multiplier,-1/multiplier) && !done){
+                obj.y -= 1/multiplier;
+                obj.x -= 1/multiplier;
             }else{
                 obj.vsp = 0;
                 break;
