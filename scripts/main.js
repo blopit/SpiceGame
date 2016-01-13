@@ -18,20 +18,16 @@ require("scripts/player.js");
 require("scripts/svg.js");
 require("scripts/computation.js");
 require("scripts/sprite.js");
+require("scripts/camera.js");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Globals
 ////////////////////////////////////////////////////////////////////////////////
 
 //screen globals
-screenWidth = 800;
-screenHeight = 600;
-
-//camera globals
-camx = 0;
-camy = 0;
-cam_spring = 0.15; //speed factor camera snaps to player view
-screen_rect = {x: camx-screenWidth/2, y: camy-screenHeight/2, width: screenWidth, height: screenHeight};
+screen_width = 800;
+screen_height = 600;
+screen_bound = 128;
 
 //Global initializations
 time = 0;               //time increment
@@ -151,6 +147,24 @@ function onLoadLevel(xmlDoc) {
             Math.floor(x[i].getAttribute("height"))
             )
             list.push(obj_missing_path);
+        }else if (x[i].style.fill === "none"){
+            if (x[i].style.stroke === "rgb(255, 0, 0)" || checkColour(x[i],"#FF0000")){
+                cam.boundaries.push(new camBoundary(
+                Math.floor(x[i].getAttribute("x")),
+                Math.floor(x[i].getAttribute("y")),
+                Math.floor(x[i].getAttribute("width")),
+                Math.floor(x[i].getAttribute("height")),
+                2
+                ));
+            }else if (x[i].style.stroke === "rgb(255, 255, 0)" || checkColour(x[i],"#FFFF00")){
+                cam.boundaries.push(new camBoundary(
+                Math.floor(x[i].getAttribute("x")),
+                Math.floor(x[i].getAttribute("y")),
+                Math.floor(x[i].getAttribute("width")),
+                Math.floor(x[i].getAttribute("height")),
+                1
+                ));
+            }
         }
 
     }
@@ -167,7 +181,6 @@ function onLoadLevel(xmlDoc) {
             var path = x[i].getAttribute("d");
             if (path != "" && path != null){
                 var p = extractPoints(parse(path));
-                console.log(Number(x[i].style.strokeWidth));
                 var mp = new movePath(p[0],p[1],parseInt(x[i].style.strokeWidth,10));
                 list.push(mp);
                 if (obj_missing_path){
@@ -186,8 +199,8 @@ window.onload = function() {
 
     //get & set canvas
     var c = document.getElementById('screen').getContext('2d');
-    c.canvas.width = screenWidth;
-    c.canvas.height = screenHeight;
+    c.canvas.width = screen_width;
+    c.canvas.height = screen_height;
 
     //load first level svg
     xmlhttp = new XMLHttpRequest();
@@ -199,6 +212,7 @@ window.onload = function() {
     };
     xmlhttp.send(null);
 
+    cam = new camera(0.15);
     //MAIN GAME LOOP
     setInterval(function() {
         time++;
@@ -207,22 +221,25 @@ window.onload = function() {
         //save canvas settings
         c.save();
         //clear screen & draw background
-        c.clearRect(0,0,screenWidth,screenHeight);
+        c.clearRect(0,0,screen_width,screen_height);
         c.fillStyle = "DarkBlue";
-        c.fillRect(0,0,screenWidth,screenHeight);
+        c.fillRect(0,0,screen_width,screen_height);
 
         //draw objects relative to centered camera
-        c.translate(screenWidth/2-camx,screenHeight/2-camy);
+        c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
 
         //draw objects TODO: draw objects by depth property
-        screen_rect = {x: camx-screenWidth/2, y: camy-screenHeight/2, width: screenWidth, height: screenHeight};
         for (var i = 0; i < list.length; i++) {
             var o = list[i];
-            var draw = checkOnScreen(o);
             o.update(list, keys);
-            if (checkOnScreen(o)){
+            if (checkOnScreen(o,cam)){
                 o.draw(c);
             }
+        }
+
+        //TODO:remove
+        for (var i = 0; i < cam.boundaries.length; i++) {
+            cam.boundaries[i].draw(c)
         }
 
         //restore saved canvas

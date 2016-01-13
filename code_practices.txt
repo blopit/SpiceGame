@@ -6,7 +6,7 @@ remove trailing whitespace
 
 Naming Conventions
 ----------------------------------------------
-functions in form: xxxYyyy -> extractPoints, parseVals
+functions & objects in form: xxxYyyy -> extractPoints, parseVals
 variables in form: xxx_yyy -> numberframes, avg_val
 OR in form: xxxyyy -> numberframes, avgval
 

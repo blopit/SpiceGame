@@ -21,14 +21,14 @@ function player(x, y, width, height) {
     image.src = "http://i.imgur.com/26loGzM.png";
 
     this.sprite = sprite({
-        width: 90*1.25,
-        height: 108*1.25,
+        width: 90,
+        height: 108,
         awidth: 900,
         aheight: 1080,
         image: image,
         numberframes: 8,
-        xoff: 48*1.25,
-        yoff: 60*1.25,
+        xoff: 48,
+        yoff: 60,
         vert: true
     });
 }
@@ -115,13 +115,12 @@ player.prototype.update = function (b, keys) {
     //apply speeds
     slopeMove(this,b,this.climb);
 
+
+
     //set Camera
     var camdx = this.x + 64*this.xscale;
     var camdy = this.y;
-    var dist = distPoints(camdx,camdy,camx,camy);
-    var dir = anglePoints(camx,camy,camdx,camdy);
-    camx += dist*Math.cos(dir)*cam_spring;
-    camy += dist*Math.sin(dir)*cam_spring;
+    cam.springTo(camdx,camdy);
 
 
 

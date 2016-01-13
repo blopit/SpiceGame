@@ -25,8 +25,9 @@ display.prototype.draw = function (c) {
 display.prototype.update = function (b, keys) {
 }
 
-function checkOnScreen(o) {
-    o.on_screen = colRxR(o,screen_rect);
+function checkOnScreen(o,s) {
+    var rect1 = {x:s.x-screen_bound,y:s.y-screen_bound,width:s.width+screen_bound*2,height:s.height+screen_bound*2};
+    o.on_screen = colRxR(o,rect1);
     return o.on_screen;
 }
 
@@ -165,14 +166,23 @@ moveBlock.prototype.update = function (c) {
         this.vsp = dy-this.y;
 
         //check rectangle to see if player is near
-        var rectx = {x:dx, y:dy-4, width: this.width, height: this.height};
-
+        var rectx = {x:dx+Math.sign(this.hsp)*4, y:dy-4, width: this.width, height: this.height};
+        var recty = {x:dx+Math.sign(this.hsp)*4, y:dy+1, width: this.width, height: this.height};
         //if moving downwards we want to move this first
         if (this.vsp > 0)
             this.y = dy;
 
         if (colRxR(rectx,hero)){
             //move player if player is near this
+            if (colRxR(recty,hero)){
+                if (this.hsp>0 && hero.hsp+this.hsp<this.hsp){
+                    this.hsp-=hero.hsp;
+                }
+                if (this.hsp<0 && hero.hsp+this.hsp>this.hsp){
+                    this.hsp-=hero.hsp;
+                }
+            }
+
             slopeMicroMove(hero,list,hero.climb,this.hsp,this.vsp);
         }
         this.x = dx;
@@ -266,5 +276,30 @@ movePath.prototype.getPos = function (val) {
     var dir = anglePoints(this.xx[cur],this.yy[cur],this.xx[cur-1],this.yy[cur-1]);
     var dist = this.pathpnts[cur] - moduloval;
     return [this.xx[cur]+Math.cos(dir)*dist,this.yy[cur]+Math.sin(dir)*dist];
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// camera boundary
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// hard boundary
+////////////////////////////////////////////////////////////////////////////////
+function camBoundary(x, y, width, height, intensity) {
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.intensity = intensity;
+}
+
+camBoundary.prototype.draw = function (c) {
+
+    c.beginPath();
+    c.strokeStyle = "red";
+    c.lineWidth = 8;
+    c.rect(this.x,this.y,this.width,this.height);
+    c.stroke();
 
 }
