@@ -58,8 +58,6 @@ function colPlace(rect1, b, x, y, w, h, check_while_off){
         if (b[i].bound === "rect"){
             //check rect collision with rect and make sure b[i] is not the object being tested
             if (colRxR(rectx, b[i]) && rect1 != b[i]){
-                //rect1.ahsp = b[i].hsp;
-                //rect1.avsp = b[i].vsp;
                 return true;
             }
         }else if (b[i].bound === "poly"){
@@ -68,8 +66,9 @@ function colPlace(rect1, b, x, y, w, h, check_while_off){
             if (!colRxR(rectx, b[i]) && rect1 != b[i])
                 continue;
             for (var j = 0; j < count; j++){
-                var p1 = {x:b[i].xx[j], y:b[i].yy[j]};
 
+                //determine the endpoints
+                var p1 = {x:b[i].xx[j], y:b[i].yy[j]};
                 var p2 = null;
                 if (j != count-1)
                     p2 = {x:b[i].xx[j+1], y:b[i].yy[j+1]};
@@ -80,7 +79,7 @@ function colPlace(rect1, b, x, y, w, h, check_while_off){
                     return true;
             }
         }else if (b[i].bound === "jt"){
-            //Jumpthrough platforms are flattened to a height of 1px
+            //Jumpthrough platforms are flattened to a height of 2px
             var p1 = {x:rect1.x+x, y:rect1.y+rect1.height+y};
             var p2 = {x:rect1.x+rect1.width+x, y:rect1.y+rect1.height+y};
             var rectjt = {x: b[i].x, y:b[i].y+2, width: b[i].width, height:2};
@@ -158,6 +157,8 @@ function colRxL(rect, p1, p2) {
 //simple movement
 //adjusts x and y of obj based on vertical and horizontal speeds
 function simpMove(obj,b){
+
+    //Loop though values adn adjust accordingly
     if (obj.vsp > 0){
         for (var i = 0; i < obj.vsp*timefctr; i++){
             if (!colPlace(obj,b,0,1)){
@@ -205,17 +206,18 @@ function slopeMove(obj,b,slope,xsp,ysp){
     var done = false;
     if (xsp > 0){
         for (var i = 0; i < xsp; i++){
+            //adjust y value to account for slopes
             for (var s = -slope; s <= slope; s++){
+                //only account for slopes if on the ground
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
                 var xs = Math.cos(Math.atan2(-s,1));//1;
                 var ys = Math.sin(Math.atan2(-s,1));//-s;
 
                 if (!colPlace(obj,b,xs,ys)){
-                    if (s < 0 && !colPlace(obj,b,0,1))
-                        continue;
                     obj.x += xs;
                     obj.y += ys;
+                    //do not account for slopes later on when doing vsp
                     if (s!=0)
                         done = true;
                     break;
@@ -234,8 +236,6 @@ function slopeMove(obj,b,slope,xsp,ysp){
                 var ys = Math.sin(Math.atan2(-s,-1));//-s;
 
                 if (!colPlace(obj,b,xs,ys)){
-                    if (s < 0 && !colPlace(obj,b,0,1))
-                        continue;
                     obj.x += xs;
                     obj.y += ys;
                     if (s!=0)
@@ -286,11 +286,12 @@ function slopeMove(obj,b,slope,xsp,ysp){
 //sloped movement
 //adjusts x and y of obj based on vertical and horizontal speeds
 //factors in slopes
-function slopeMicroMove(obj,b,slope,xsp,ysp){
+//USE FOR MICRO MOVEMENTS ONLY such as to steady self on moving platforms
+function slopeMicroMove(obj,b,slope,xsp,ysp,multiplex){
     var xsp = xsp || obj.hsp*timefctr;
     var ysp = ysp || obj.vsp*timefctr;
+    var multiplex = multiplex || 10;
 
-    var multiplex = 10;
     xsp *= multiplex;
     ysp *= multiplex;
     ysp = Math.round(ysp);
@@ -302,8 +303,8 @@ function slopeMicroMove(obj,b,slope,xsp,ysp){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
-                var xs = 1/multiplex;//1;
-                var ys = -s/multiplex;//-s;
+                var xs = 1/multiplex;
+                var ys = -s/multiplex;
 
                 if (!colPlace(obj,b,xs,ys)){
                     if (s < 0 && !colPlace(obj,b,0,1))
@@ -324,8 +325,8 @@ function slopeMicroMove(obj,b,slope,xsp,ysp){
             for (var s = -slope; s <= slope; s++){
                 if (s != 0 && !colPlace(obj,b,0,1))
                     continue;
-                var xs = -1/multiplex;//-1;
-                var ys = -s/multiplex;//-s;
+                var xs = -1/multiplex;
+                var ys = -s/multiplex;
 
                 if (!colPlace(obj,b,xs,ys)){
                     if (s < 0 && !colPlace(obj,b,0,1))

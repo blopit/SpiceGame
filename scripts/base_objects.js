@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 function display(x, y, width, height) {
-    this.sprite = null;
+    this.sprite = null; //related image
     this.width = width;
     this.height = height;
     this.x = x;
@@ -15,11 +15,13 @@ function display(x, y, width, height) {
     this.on_screen = true;
 }
 
+//draw called for all visible objects on screen
 display.prototype.draw = function (c) {
     c.fillStyle = "white";
     c.fillRect(this.x,this.y,this.width,this.height);
 }
 
+//update called for all objects
 display.prototype.update = function (b, keys) {
 }
 
@@ -62,7 +64,8 @@ objt.prototype.update = function (b, keys) {
 
 function instance(x, y, width, height) {
     objt.call(this, x, y, width, height);
-    this.hp = 0;
+    this.hp = 0; //HIT points
+
     //horizontal bounce factor TODO: explain this a bit more
     this.bnc = 0.25;
 }
@@ -141,8 +144,8 @@ jtBlock.prototype.update = function (c) {
 
 function moveBlock(x, y, width, height) {
     objt.call(this, x, y, width, height);
-    this.path = null;
-    this.pos = 0;
+    this.path = null;   //path object
+    this.pos = 0;       //position in path
 }
 
 moveBlock.prototype.draw = function (c) {
@@ -151,28 +154,34 @@ moveBlock.prototype.draw = function (c) {
 }
 
 moveBlock.prototype.update = function (c) {
+    //update if path exists
     if (this.path != null){
 
+        //get xy coords based on position in path
         var loc = this.path.getPos(this.pos);
         var dx = loc[0];
         var dy = loc[1];
         this.hsp = dx-this.x;
         this.vsp = dy-this.y;
-        var rectx = {x:dx, y:dy-4, width: this.width, height: this.height};
-        var recty = {x:dx+2, y:dy-2, width: this.width-4, height: this.height};
 
+        //check rectangle to see if player is near
+        var rectx = {x:dx, y:dy-4, width: this.width, height: this.height};
+
+        //if moving downwards we want to move this first
         if (this.vsp > 0)
             this.y = dy;
 
         if (colRxR(rectx,hero)){
+            //move player if player is near this
             slopeMicroMove(hero,list,hero.climb,this.hsp,this.vsp);
         }
         this.x = dx;
 
+        //not moving downwards so move as usual
         if (this.vsp < 0)
             this.y = dy;
 
-        this.pos+=this.path.speed;
+        this.pos+=this.path.speed; // increase by path speed
     }
 }
 
@@ -197,14 +206,15 @@ function movePath(xx, yy, speed) {
     this.yy = yy; //y coordinates
     this.speed = speed;
 
-    this.pathlen = 0;
-    this.pathpnts = [0];
+    this.pathlen = 0;       //total length of path
+    this.pathpnts = [0];    //total path length at point index FYI: this.pathpnts[0] = 0
 
     var cx = this.xx[0];
     var cy = this.yy[0];
     this.xx.push(cx);
     this.yy.push(cy);
 
+    //set values for pathlen and pathpnts
     for (var i = 1; i < this.xx.length; i++){
         var d = distPoints(cx,cy,this.xx[i],this.yy[i]);
         this.pathlen += d;
@@ -230,20 +240,31 @@ movePath.prototype.draw = function (c) {
 movePath.prototype.update = function (c) {
 }
 
+//get xy coords based on val (distance to travel from first point), loops at max length
 movePath.prototype.getPos = function (val) {
     var cur = 0;
+
+    //return if val = 0;
+    if (val === 0){
+        return [this.xx[0],this.yy[0]];
+    }
+
+    //setup val to be non negative
+    while(val < 0){
+        val += this.pathlen
+    }
+
+    //find the looped path value
     var moduloval = val % this.pathlen;
 
+    //find the two points on path that the object would between
     while (moduloval > this.pathpnts[cur]){
         cur++;
     }
 
-    if (cur === 0)
-        return [this.xx[0],this.yy[0]];
-
+    //calculate the exact xy coord the object would be at
     var dir = anglePoints(this.xx[cur],this.yy[cur],this.xx[cur-1],this.yy[cur-1]);
     var dist = this.pathpnts[cur] - moduloval;
-
     return [this.xx[cur]+Math.cos(dir)*dist,this.yy[cur]+Math.sin(dir)*dist];
 
 }
