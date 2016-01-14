@@ -167,24 +167,28 @@ moveBlock.prototype.update = function (c) {
         this.vsp = dy-this.y;
 
         //check rectangle to see if player is near
-        var rectx = {x:dx+Math.sign(this.hsp)*4, y:dy-4, width: this.width, height: this.height};
-        var recty = {x:dx+Math.sign(this.hsp)*4, y:dy+1, width: this.width, height: this.height};
+        var rectx = {x:dx+this.hsp, y:dy-4, width: this.width, height: this.height};
+        var recty = {x:dx, y:dy+2, width: this.width, height: this.height-4};
         //if moving downwards we want to move this first
         if (this.vsp > 0)
             this.y = dy;
 
+        var mx = this.hsp;
         if (colRxR(rectx,hero)){
             //move player if player is near this
             if (colRxR(recty,hero)){
-                if (this.hsp>0 && hero.hsp+this.hsp<this.hsp){
-                    this.hsp-=hero.hsp;
+                if (this.hsp>0 && hero.hsp<0){
+                    //mx-=hero.hsp;
+                    hero.hsp = 0;
+                    //mx = 0;
                 }
-                if (this.hsp<0 && hero.hsp+this.hsp>this.hsp){
-                    this.hsp-=hero.hsp;
+                if (this.hsp<0 && hero.hsp>0){
+                    hero.hsp = 0;
+                    //mx = 0;
                 }
             }
 
-            slopeMicroMove(hero,list,hero.climb,this.hsp,this.vsp);
+            slopeMicroMove(hero,list,hero.climb,mx,this.vsp);
         }
         this.x = dx;
 

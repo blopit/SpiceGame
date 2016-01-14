@@ -343,7 +343,7 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplier){
                         done = true;
                     break;
                 }else if (s>=slope){
-                    obj.hsp = -obj.hsp*obj.bnc;
+                    obj.hsp = 0;
                     break;
                 }
             }
@@ -365,7 +365,7 @@ function slopeMicroMove(obj,b,slope,xsp,ysp,multiplier){
                         done = true;
                     break;
                 }else if (s>=slope){
-                    obj.hsp = -obj.hsp*obj.bnc;
+                    obj.hsp = 0;
                     break;
                 }
             }

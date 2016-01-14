@@ -13,7 +13,7 @@ function player(x, y, width, height) {
     this.acc = 0.8;             //acceleration
     this.stopjumpspeed = 2.5;   //speed at which to accelerate to stop jumping
     this.maxhsp = 8;            //max horizontal speed
-    this.maxspeed = 40;         //max any speed
+    this.maxspeed = 20;         //max any speed
 
     this.xscale = 1;            //horizontal scale
 
