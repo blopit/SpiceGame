@@ -6,13 +6,13 @@
 
 function player(x, y, width, height) {
     instance.call(this, x, y, width, height);
-    this.jump = 13;             //jump velocity
+    this.jump = 12;             //jump velocity
     this.climb = 2;             //max pixel slope climb
-    this.fric = 0.65;           //ground fric
+    this.fric = 0.4;           //ground fric
     this.afric = 0.3;           //airfric
-    this.acc = 0.8;             //acceleration
+    this.acc = 0.5;             //acceleration
     this.stopjumpspeed = 2.5;   //speed at which to accelerate to stop jumping
-    this.maxhsp = 8;            //max horizontal speed
+    this.maxhsp = 6;            //max horizontal speed
     this.maxspeed = 20;         //max any speed
 
     this.xscale = 1;            //horizontal scale

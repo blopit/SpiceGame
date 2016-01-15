@@ -54,6 +54,7 @@ var f = document.querySelector("#fps");
 
 grav = 0.5;             //gravity
 timefctr = 1.0;         //time factor
+canvas = null;
 
 //KEYBOARD GLOBALS
 //up,down,left,right,jump,att,item
@@ -225,13 +226,14 @@ window.onload = function() {
         //save canvas settings
         c.save();
         //clear screen & draw background
-        c.clearRect(0,0,screen_width,screen_height);
+        //c.clearRect(0,0,screen_width,screen_height);
         c.fillStyle = "DarkBlue";
         c.fillRect(0,0,screen_width,screen_height);
 
         //draw objects relative to centered camera
         c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
 
+        canvas = c;
         //draw objects TODO: draw objects by depth property
         for (var i = 0; i < list.length; i++) {
             var o = list[i];

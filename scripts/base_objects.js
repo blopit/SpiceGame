@@ -1,7 +1,7 @@
 
 // BASE OBJECTS DOCUMENT
 ////////////////////////////////////////////////////////////////////////////////
-// displayable PARENT / regular block
+// displayable PARENT (objects that do not collide with anything, eg foreground)
 ////////////////////////////////////////////////////////////////////////////////
 
 function display(x, y, width, height) {
@@ -32,7 +32,7 @@ function checkOnScreen(o,s) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// object PARENT
+// object PARENT / all objects that are not entities (powerups, projectiles, blocks)
 ////////////////////////////////////////////////////////////////////////////////
 
 function objt(x, y, width, height) {
@@ -60,12 +60,13 @@ objt.prototype.update = function (b, keys) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// instance PARENT
+// instance PARENT // objects that are entities (player, enemies)
 ////////////////////////////////////////////////////////////////////////////////
 
 function instance(x, y, width, height) {
     objt.call(this, x, y, width, height);
     this.hp = 0; //HIT points
+    this.faction = 0;
 
     //horizontal bounce factor TODO: explain this a bit more
     this.bnc = 0.25;
@@ -153,6 +154,13 @@ function moveBlock(x, y, width, height) {
 moveBlock.prototype.draw = function (c) {
     c.fillStyle = "lime";
     c.fillRect(this.x,this.y,this.width,this.height);
+    c.fillStyle = "red";
+    c.fillRect(this.x+this.width/2-4,this.y+this.height/2-4,8,8);
+}
+
+function dR(c, rect1, col){
+    c.fillStyle = col;
+    c.fillRect(rect1.x,rect1.y,rect1.width,rect1.height);
 }
 
 moveBlock.prototype.update = function (c) {
@@ -161,35 +169,47 @@ moveBlock.prototype.update = function (c) {
 
         //get xy coords based on position in path
         var loc = this.path.getPos(this.pos);
-        var dx = loc[0];
-        var dy = loc[1];
+        var dx = loc[0]-this.width/2;
+        var dy = loc[1]-this.height/2;
         this.hsp = dx-this.x;
         this.vsp = dy-this.y;
 
         //check rectangle to see if player is near
-        var rectx = {x:dx+this.hsp, y:dy-4, width: this.width, height: this.height};
-        var recty = {x:dx, y:dy+2, width: this.width, height: this.height-4};
+        var rectx = {x:dx+this.hsp, y:dy-this.vsp-4, width: this.width, height: this.height};
+        var rectx2 = {x:dx+this.hsp, y:dy-4, width: this.width, height: this.height};
+        var recty = {x:dx, y:dy-this.vsp, width: this.width, height: this.height+4};
+        var rectz = {x:dx, y:dy+4, width: this.width, height: this.height+4};
         //if moving downwards we want to move this first
+        dR(canvas, rectx,"red");
+        dR(canvas, rectx2,"blue");
+
         if (this.vsp > 0)
             this.y = dy;
 
         var mx = this.hsp;
-        if (colRxR(rectx,hero)){
+        if (colRxR(rectz,hero)){
+            if (this.vsp>0 && hero.vsp<0){
+                hero.y += this.vsp;
+                hero.vsp = 0;
+            }else if (this.vsp<0 && hero.vsp>0){
+                hero.vsp = 0;
+            }
+        }
+        if (colRxR(rectx,hero) || colRxR(rectx2,hero)){
             //move player if player is near this
             if (colRxR(recty,hero)){
                 if (this.hsp>0 && hero.hsp<0){
-                    //mx-=hero.hsp;
+                    hero.x += this.hsp;
                     hero.hsp = 0;
-                    //mx = 0;
-                }
-                if (this.hsp<0 && hero.hsp>0){
+                }else if (this.hsp<0 && hero.hsp>0){
+                    hero.x += this.hsp;
                     hero.hsp = 0;
-                    //mx = 0;
                 }
             }
-
             slopeMicroMove(hero,list,hero.climb,mx,this.vsp);
         }
+
+
         this.x = dx;
 
         //not moving downwards so move as usual
@@ -241,7 +261,8 @@ function movePath(xx, yy, speed) {
 
 movePath.prototype.draw = function (c) {
 
-    c.strokeStyle = "lime";
+    c.strokeStyle = "ltlime";
+    c.globalAlpha=0.5;
     c.lineWidth = 2; // Lines 4px wide, dots of diameter 4
 
     c.beginPath();
@@ -254,6 +275,7 @@ movePath.prototype.draw = function (c) {
         cy = this.yy[i];
     }
     c.stroke();
+    c.globalAlpha=1;
 
 }
 

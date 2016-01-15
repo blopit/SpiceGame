@@ -30,7 +30,7 @@
      showgrid="false"
      inkscape:zoom="0.48"
      inkscape:cx="-47.649573"
-     inkscape:cy="412.44913"
+     inkscape:cy="829.1158"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -154,10 +154,10 @@
        y="-307.94824" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3.01399994;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 341.03239,-48.854233 -97.0998,-50.523543 110.184,-84.356593 Z"
+       d="m 236.86573,-309.2709 -57.42764,130.49938 -85.399853,78.920657 -222.388037,-79.839347 -57.29953,-98.41638 60.961,-98.0745 172.006982,34.71092 130.695228,-91.13121 z"
        id="path3481"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cccc" />
+       sodipodi:nodetypes="ccccccccc" />
     <rect
        style="fill:none;stroke:#ff0000;stroke-width:3.65313339;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4307"
@@ -201,17 +201,17 @@
        id="rect4339"
        style="fill:none;stroke:#ff0000;stroke-width:5.65403843;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect
-       y="-441.51874"
-       x="326.16867"
-       height="42.857624"
-       width="48.094971"
+       y="-441.42404"
+       x="326.26337"
+       height="42.668251"
+       width="120.82227"
        id="rect4343"
-       style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:0.32567653px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+       style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:0.51504892px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
     <path
        sodipodi:nodetypes="ccccc"
        inkscape:connector-curvature="0"
        id="path4345"
-       d="m 436.93591,53.59652 41.02527,-608.1112 -491.049861,-23.89907 489.626831,22.97254 z"
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.4000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       d="m 436.93591,53.59652 222.40157,-727.62234 -941.79296,102.84447 940.30484,-102.90362 z"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
   </g>
 </svg>
