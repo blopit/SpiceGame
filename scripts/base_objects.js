@@ -164,6 +164,9 @@ function dR(c, rect1, col){
 }
 
 moveBlock.prototype.update = function (c) {
+    //TODO: FIX THIS SHIT
+    //SOMEONE HELP PLS
+
     //update if path exists
     if (this.path != null){
 
