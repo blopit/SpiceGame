@@ -18,7 +18,7 @@ camera.prototype.update = function () {
     this.x = this.cx-this.width/2;
     this.y = this.cy-this.height/2;
 
-    if (this.bound!=null){
+    /*if (this.bound!=null){
         if (colRxR(hero,this.bound))
             return;
     }
@@ -28,7 +28,7 @@ camera.prototype.update = function () {
             return;
         }
     }
-    this.bound = null;
+    this.bound = null;*/
 
 }
 camera.prototype.snapToRect = function (rect1,dest_x,dest_y) {
@@ -52,19 +52,18 @@ camera.prototype.snapToRect = function (rect1,dest_x,dest_y) {
     return [dx,dy];
 
 }
-camera.prototype.springTo = function (dest_x,dest_y,bnd) {
-    var bnd = bnd || true;
+camera.prototype.springTo = function (dest_x,dest_y) {
 
     var dest = [dest_x,dest_y];
-    if (this.bound!=null && bnd){
-        if (this.bound.intensity === 2){
-            dest = this.snapToRect(this.bound,dest_x,dest_y);
-        }else if (this.bound.intensity === 1){
+    if (this.bound!=null){
+        //if (this.bound.intensity === 2){
+        dest = this.snapToRect(this.bound,dest_x,dest_y);
+        /*}else if (this.bound.intensity === 1){
             var d = 128;
             var rectx = {x:this.bound.x+d, y:this.bound.y+d, width:this.bound.width-d*2, height:this.bound.height-d*2};
             if (colRxR(hero,rectx))
                 dest = this.snapToRect(this.bound,dest_x,dest_y);
-        }
+        }*/
     }
     dest_x = dest[0];
     dest_y = dest[1];

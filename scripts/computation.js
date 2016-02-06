@@ -1,6 +1,102 @@
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Drawing Functions
 ////////////////////////////////////////////////////////////////////////////////
+
+function polygonArea(vertices) {
+    var area = 0;
+    for (var i = 0; i < vertices.length; i++) {
+        j = (i + 1) % vertices.length;
+        area += vertices[i].x * vertices[j].y;
+        area -= vertices[j].x * vertices[i].y;
+    }
+    return area / 2;
+}
+
+function straight_skeleton(poly, spacing)
+{
+
+    var resulting_path = [];
+    var N = poly.length;
+    var mi, mi1, li, li1, ri, ri1, si, si1, Xi1, Yi1;
+    for(var i = 0; i < N; i++)
+    {
+        mi = (poly[(i+1) % N].y - poly[i].y)/(poly[(i+1) % N].x - poly[i].x);
+        mi1 = (poly[(i+2) % N].y - poly[(i+1) % N].y)/(poly[(i+2) % N].x - poly[(i+1) % N].x);
+        li = Math.sqrt((poly[(i+1) % N].x - poly[i].x)*(poly[(i+1) % N].x - poly[i].x)+(poly[(i+1) % N].y - poly[i].y)*(poly[(i+1) % N].y - poly[i].y));
+        li1 = Math.sqrt((poly[(i+2) % N].x - poly[(i+1) % N].x)*(poly[(i+2) % N].x - poly[(i+1) % N].x)+(poly[(i+2) % N].y - poly[(i+1) % N].y)*(poly[(i+2) % N].y - poly[(i+1) % N].y));
+        ri = poly[i].x+spacing*(poly[(i+1) % N].y - poly[i].y)/li;
+        ri1 = poly[(i+1) % N].x+spacing*(poly[(i+2) % N].y - poly[(i+1) % N].y)/li1;
+        si = poly[i].y-spacing*(poly[(i+1) % N].x - poly[i].x)/li;
+        si1 = poly[(i+1) % N].y-spacing*(poly[(i+2) % N].x - poly[(i+1) % N].x)/li1;
+        Xi1 = (mi1*ri1-mi*ri+si-si1)/(mi1-mi);
+        Yi1 = (mi*mi1*(ri1-ri)+mi1*si-mi*si1)/(mi1-mi);
+
+        if(poly[(i+1) % N].x - poly[i % N].x==0)
+        {
+            Xi1 = poly[(i+1) % N].x + spacing*(poly[(i+1) % N].y - poly[i % N].y)/Math.abs(poly[(i+1) % N].y - poly[i % N].y);
+            Yi1 = mi1*Xi1 - mi1*ri1 + si1;
+        }
+        if(poly[(i+2) % N].x - poly[(i+1) % N].x==0 )
+        {
+            Xi1 = poly[(i+2) % N].x + spacing*(poly[(i+2) % N].y - poly[(i+1) % N].y)/Math.abs(poly[(i+2) % N].y - poly[(i+1) % N].y);
+            Yi1 = mi*Xi1 - mi*ri + si;
+        }
+
+        resulting_path.push({
+            x: Xi1,
+            y: Yi1
+        });
+    }
+
+    return resulting_path;
+}
+
+function roundedPath( a, context, rad ){
+    if (!a.length) return;
+
+    context.beginPath();
+
+    var factor = rad;
+
+    var startX = (a[0].x*(1-factor)+a[1].x*(factor));
+    var startY = (a[0].y*(1-factor)+a[1].y*(factor));
+
+    context.moveTo(startX, startY);
+
+    var x1, y1, x2, y2;
+    x2 = startX;
+    y2 = startY;
+    for (var i = 1; i < a.length-1; i++) {
+
+
+        x1 = (a[i-1].x*(factor)+a[i].x*(1-factor));
+        y1 = (a[i-1].y*(factor)+a[i].y*(1-factor));
+
+        context.lineTo(x1,y1);
+
+        x2 = a[i].x;
+        y2 = a[i].y;
+
+        x1 = (a[i+1].x*(factor)+a[i].x*(1-factor));
+        y1 = (a[i+1].y*(factor)+a[i].y*(1-factor));
+
+        context.quadraticCurveTo( x2, y2, x1, y1);
+    }
+
+    x1 = (a[i-1].x*(factor)+a[i].x*(1-factor));
+    y1 = (a[i-1].y*(factor)+a[i].y*(1-factor));
+
+    context.lineTo(x1,y1);
+
+    x1 = (a[0].x*(factor)+a[i].x*(1-factor));
+    y1 = (a[0].y*(factor)+a[i].y*(1-factor));
+    context.quadraticCurveTo(x1, y1, startX, startY);
+
+    context.closePath();
+}
 
 var CP = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
 if (CP.lineTo) {
@@ -65,6 +161,19 @@ function fric(q,fr){
 ////////////////////////////////////////////////////////////////////////////////
 // Collision Functions
 ////////////////////////////////////////////////////////////////////////////////
+
+function isPointInPoly(poly, pt){
+    for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i)
+        ((poly[i].y <= pt.y && pt.y < poly[j].y) || (poly[j].y <= pt.y && pt.y < poly[i].y))
+        && (pt.x < (poly[j].x - poly[i].x) * (pt.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)
+        && (c = !c);
+    return c;
+}
+
+function isPointInRect(pt, x, y, width, height){
+    return (pt.x > x && pt.x < x+width && pt.y > y && pt.y < y+height);
+}
+
 
 //Check if a rectangle colides if moved by x,y coordinates
 //rect1 = rectangle checking, b = list of objects to test against
