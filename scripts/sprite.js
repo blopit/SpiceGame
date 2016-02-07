@@ -3,7 +3,9 @@ function sprite (options) {
     var that = {},
         numberframes = options.numberframes || 1,
         xoff = options.xoff || 0,
-        yoff = options.yoff || 0;
+        yoff = options.yoff || 0,
+        xxf = options.xxf || 0,
+        yyf = options.yyf || 0;
 
         that.width = options.width;
         that.height = options.height;
@@ -13,6 +15,7 @@ function sprite (options) {
         that.vert = options.vert || false;
 
         that.render = function (c,x,y,frame,xscale,yscale) {
+            frame = frame || 0;
             while (frame < 0){
                 frame += numberframes;
             }
@@ -27,8 +30,8 @@ function sprite (options) {
 
             c.drawImage(
                 that.image,
-                f * that.awidth * (!that.vert),
-                f * that.aheight * (that.vert),
+                xxf + f * that.awidth * (!that.vert),
+                yyf + f * that.aheight * (that.vert),
                 that.awidth,
                 that.aheight,
                 -xoff,
@@ -40,3 +43,4 @@ function sprite (options) {
 
     return that;
 }
+

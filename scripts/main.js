@@ -24,16 +24,22 @@ require("scripts/camera.js");
 // Globals
 ////////////////////////////////////////////////////////////////////////////////
 
+var tintCanvas = document.createElement('canvas');
+tintCanvas.width = 512;
+tintCanvas.height = 512;
+var tintCtx = tintCanvas.getContext('2d');
+
 //screen globals
 screen_width = 800;
 screen_height = 600;
 screen_bound = 128;
 
-ground_level = 540;
+ground_level = 900;
 
 mouse = {x:0,y:0};
 emouse = mouse;
 tree = null;  //player
+//TR = {x:800,y:ground_level};
 
 maxHP = 1000;
 HP = 50;
@@ -50,8 +56,12 @@ selected = null;
 hover = null;
 
 cam = null;
-var cvs = document.getElementById('screen');
-var c = cvs.getContext('2d');
+cvs = document.getElementById('screen');
+
+s_worm = [];
+s_back = [];
+s_snail = [];
+s_tree = [];
 
 var fps = {
     startTime : 0,
@@ -69,130 +79,48 @@ var fps = {
     }
 };
 var f = document.querySelector("#fps");
-var c = cvs.getContext('2d');
+
 timefctr = 1.0;         //time factor
 
-
-var Game = { };
-
-Game.draw = function() {
-    //save canvas settings
-    c.save();
-    //clear screen & draw background
-    //c.clearRect(0,0,screen_width,screen_height);
-    c.fillStyle = "DarkBlue";
-    c.fillRect(0,0,screen_width,screen_height);
-    canvas = c;
-
-
-    //if (distPoints(cam.x,cam.y,mouse.x,mouse.y) > 32){
-    mouse = {x:emouse.x+cam.x,y:emouse.y+cam.y};
-    if (!isPointInRect(mouse, cam.x+64, cam.y+64, cam.width-128, cam.height-128)){
-        cam.springTo(mouse.x,mouse.y);
-    }
-
-    //draw objects relative to centered camera
-    c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
-
-    c.fillStyle = "yellow";
-    c.fillRect(0,ground_level,screen_width,200);
-
-    //draw objects TODO: draw objects by depth property
-    for (var i = 0; i < objtList.length; i++) {
-        var o = objtList[i];
-        o.draw(c);
-    }
-    //blur(c);
-
-    c.fillStyle = "black";
-    c.beginPath();
-    c.arc(cam.cx,cam.cy,5,0,2*Math.PI);
-    c.closePath();
-    c.fill();
-
-    c.fillStyle = "black";
-    c.beginPath();
-    c.arc(mouse.x,mouse.y,15,0,2*Math.PI);
-    c.closePath();
-    c.fill();
-
-    c.lineWidth=10;
-    c.strokeRect(rectx.x,rectx.y,rectx.width,rectx.height);
-    //restore saved canvas
-    c.restore();
-
-    c.fillStyle = "black";
-    c.fillRect(16,16,128,12);
-    c.fillRect(16,32,128,12);
-
-    c.fillStyle = "darkgreen";
-    c.fillRect(16,16,128*(HP/maxHP),12);
-    c.fillStyle = "lime";
-    c.fillRect(16,32,128*(NT/maxNT),12);
-};
-
-Game.update = function() {
-    time++;
-    f.innerHTML = "FPS: " + fps.getFPS();
-    HP++;
-    //draw objects TODO: draw objects by depth property
-    for (var i = 0; i < objtList.length; i++) {
-        var o = objtList[i];
-        o.update(c);
-    }
-    cam.update();
-};
-
-lastFrameTimeMs = 0,
-maxFPS = 60.0,
-delta = 0,
-timestep = 1000.0 / 60.0;
-
-Game.panic = function() {
-    delta = 0;
-}
-
-Game.run = function (timestamp) {
-    // Throttle the frame rate.
-    if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
-        requestAnimationFrame(Game.run);
-        return;
-    }
-    delta += timestamp - lastFrameTimeMs;
-    lastFrameTimeMs = timestamp;
-
-    var numUpdateSteps = 0;
-    while (delta >= timestep) {
-        Game.update(timestep);
-        delta -= timestep;
-        if (++numUpdateSteps >= 240) {
-            Game.panic();
-            break;
-        }
-    }
-    Game.draw();
-    requestAnimationFrame(Game.run);
-}
-
-
-
-Game.initialize = function() {
-};
-
+var w = null;
 ////////////////////////////////////////////////////////////////////////////////
 // Event loop
 ////////////////////////////////////////////////////////////////////////////////
 window.onload = function() {
+    function addImage(list,url,w,h, xf, yf){
+        var image = new Image();
+        image.src = url;
+        list.push(new sprite({ width: w, height: h, image: image, xoff: xf, yoff: yf}));
+    }
+
+    addImage(s_tree,"images/backgrounds/seed.png",76,40,0,0);
+    addImage(s_back,"images/backgrounds/back.png",1600,1000,0,0);
+
+    var image = new Image();
+    image.src = "images/sprites/ss_ws.png";
+    s_worm.push(new sprite({ width: 164, height: 121,
+        numberframes: 5,
+        image: image, yyf: 121, xoff: 70, yoff: 75}));
+
+    image.src = "images/sprites/ss_ws.png";
+    s_snail.push(new sprite({ width: 164, height: 121,
+        numberframes: 5,
+        image: image, xoff: 70, yoff: 75}));
 
     //get & set canvas
     cam = new camera(0.05);
     rectx = {x: 0, y: 0, width: 1600, height: 1000};
     cam.bound = rectx;
+    cam.cx = 800;
+    cam.cy = 600;
 
 
-
+    var c = cvs.getContext('2d');
     c.canvas.width = screen_width;
     c.canvas.height = screen_height;
+
+    tree = new tree(775,880,51,33);
+    objtList.push(tree);
 
     var idx = 0;
     function addSection(list,type){
@@ -214,10 +142,90 @@ window.onload = function() {
 
     addSection([191,525,180,576,0,586,1,525],"shade");
     addSection([326,529,332,573,523,586,521,521,409,525],"shade");
-    requestAnimationFrame(Game.run);
+
+
+    var x = new snail(900,800,48,32);
+    x.faction = 2;
+    w = x;
+    objtList.push(x);
+    x = new worm(300,800,48,32);
+    x.faction = 0;
+    x.hitStun = 100;
+    objtList.push(x);
+
+
+    objtList.push(new hopper(600,400,48,32));
+
+    setInterval(function() {
+        time++;
+        f.innerHTML = "FPS: " + fps.getFPS();
+        HP++;
+        //save canvas settings
+        c.save();
+        //clear screen & draw background
+        //c.clearRect(0,0,screen_width,screen_height);
+        //c.fillStyle = "DarkBlue";
+        //c.fillRect(0,0,screen_width,screen_height);
+
+
+        canvas = c;
+
+
+        //if (distPoints(cam.x,cam.y,mouse.x,mouse.y) > 32){
+        mouse = {x:emouse.x+cam.x,y:emouse.y+cam.y};
+        if (!isPointInRect(mouse, cam.x+64, cam.y+64, cam.width-128, cam.height-128)){
+            cam.springTo(mouse.x,mouse.y);
+        }
+
+
+        //}
+
+        //draw objects relative to centered camera
+        c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
+        cam.update();
+
+        s_back[0].render(c,0,0,0,1);
+
+        //draw objects TODO: draw objects by depth property
+        for (var i = 0; i < objtList.length; i++) {
+            var o = objtList[i];
+            o.update(c);
+            o.draw(c);
+        }
+
+        c.fillStyle = "black";
+        c.beginPath();
+        c.arc(mouse.x,mouse.y,15,0,2*Math.PI);
+        c.closePath();
+        c.fill();
+
+        c.lineWidth=10;
+        c.strokeRect(rectx.x,rectx.y,rectx.width,rectx.height);
+        //restore saved canvas
+        c.restore();
+
+
+        //HUD
+
+        c.fillStyle = "black";
+        c.fillRect(16,16,128,12);
+        c.fillRect(16,32,128,12);
+
+        c.fillStyle = "darkgreen";
+        c.fillRect(16,16,128*(HP/maxHP),12);
+        c.fillStyle = "lime";
+        c.fillRect(16,32,128*(NT/maxNT),12);
+
+    }, 1000 / 60); //60fps TODO: find better/faster way to do this
 };
 
 document.onclick = function(e){
+    w.attStun = 60;
+    //w.hsp = 4;
+    //w.vsp = -4;
+    //w.hp -= 20;
+    w.li = 1.10;
+
     for (var i = 0; i < objtList.length; i++) {
         var o = objtList[i];
         if (o.bound != "poly_sect")

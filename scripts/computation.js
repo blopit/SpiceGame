@@ -126,6 +126,11 @@ if (CP.lineTo) {
 // Math Functions
 ////////////////////////////////////////////////////////////////////////////////
 
+function gauRnd() {
+    return ((Math.random() + Math.random()
+        + Math.random() + Math.random() ) - 2) / 2;
+}
+
 //FOR SAFARI, safari does not like sign function :(
 Math.sign = Math.sign || function(x) {
   x = +x;
