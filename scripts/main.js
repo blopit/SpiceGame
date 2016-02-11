@@ -29,29 +29,11 @@ screen_width = 800;
 screen_height = 600;
 screen_bound = 128;
 
-ground_level = 540;
-
-mouse = {x:0,y:0};
-emouse = mouse;
-tree = null;  //player
-
-maxHP = 1000;
-HP = 50;
-drwHP = 50;
-maxNT = 1000;
-NT = 50;
-drwNT = 50;
-
-time = 0;
-objtList = [];
-length = 0;
-
-selected = null;
-hover = null;
-
-cam = null;
-var cvs = document.getElementById('screen');
-var c = cvs.getContext('2d');
+//Global initializations
+time = 0;               //time increment
+list = [];
+xmlhttp = null;
+hero = null;  //player
 
 var fps = {
     startTime : 0,
@@ -69,176 +51,225 @@ var fps = {
     }
 };
 var f = document.querySelector("#fps");
-var c = cvs.getContext('2d');
+
+grav = 0.5;             //gravity
 timefctr = 1.0;         //time factor
+canvas = null;
+
+//KEYBOARD GLOBALS
+//up,down,left,right,jump,att,item
+//how long since last key press of same key
+//how long key has been held down
+keys = [false,false,false,false,false,false,false,
+0,0,0,0,0,0,0,
+0,0,0,0,0,0,0];
+
+//up_key, down_key, left_key, right_key, space_key, space_key, space_key
+key_codes = [38, 40, 37, 39, 32 ,32 ,32] // key codes
 
 
-var Game = { };
+////////////////////////////////////////////////////////////////////////////////
+// SVG FILE READER
+////////////////////////////////////////////////////////////////////////////////
 
-Game.draw = function() {
-    //save canvas settings
-    c.save();
-    //clear screen & draw background
-    //c.clearRect(0,0,screen_width,screen_height);
-    c.fillStyle = "DarkBlue";
-    c.fillRect(0,0,screen_width,screen_height);
-    canvas = c;
+//click 'Open SVG' button
+$('#id').on('click', function() {
+    $('#svg').trigger('click');
+});
 
-
-    //if (distPoints(cam.x,cam.y,mouse.x,mouse.y) > 32){
-    mouse = {x:emouse.x+cam.x,y:emouse.y+cam.y};
-    if (!isPointInRect(mouse, cam.x+64, cam.y+64, cam.width-128, cam.height-128)){
-        cam.springTo(mouse.x,mouse.y);
-    }
-
-    //draw objects relative to centered camera
-    c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
-
-    c.fillStyle = "yellow";
-    c.fillRect(0,ground_level,screen_width,200);
-
-    //draw objects TODO: draw objects by depth property
-    for (var i = 0; i < objtList.length; i++) {
-        var o = objtList[i];
-        o.draw(c);
-    }
-    //blur(c);
-
-    c.fillStyle = "black";
-    c.beginPath();
-    c.arc(cam.cx,cam.cy,5,0,2*Math.PI);
-    c.closePath();
-    c.fill();
-
-    c.fillStyle = "black";
-    c.beginPath();
-    c.arc(mouse.x,mouse.y,15,0,2*Math.PI);
-    c.closePath();
-    c.fill();
-
-    c.lineWidth=10;
-    c.strokeRect(rectx.x,rectx.y,rectx.width,rectx.height);
-    //restore saved canvas
-    c.restore();
-
-    c.fillStyle = "black";
-    c.fillRect(16,16,128,12);
-    c.fillRect(16,32,128,12);
-
-    c.fillStyle = "darkgreen";
-    c.fillRect(16,16,128*(HP/maxHP),12);
-    c.fillStyle = "lime";
-    c.fillRect(16,32,128*(NT/maxNT),12);
-};
-
-Game.update = function() {
-    time++;
-    f.innerHTML = "FPS: " + fps.getFPS();
-    HP++;
-    //draw objects TODO: draw objects by depth property
-    for (var i = 0; i < objtList.length; i++) {
-        var o = objtList[i];
-        o.update(c);
-    }
-    cam.update();
-};
-
-lastFrameTimeMs = 0,
-maxFPS = 60.0,
-delta = 0,
-timestep = 1000.0 / 60.0;
-
-Game.panic = function() {
-    delta = 0;
-}
-
-Game.run = function (timestamp) {
-    // Throttle the frame rate.
-    if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
-        requestAnimationFrame(Game.run);
+//read a file
+function readSingleFile(e) {
+    var file = e.target.files[0];
+    if (!file) {
         return;
     }
-    delta += timestamp - lastFrameTimeMs;
-    lastFrameTimeMs = timestamp;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var contents = e.target.result;
 
-    var numUpdateSteps = 0;
-    while (delta >= timestep) {
-        Game.update(timestep);
-        delta -= timestep;
-        if (++numUpdateSteps >= 240) {
-            Game.panic();
-            break;
-        }
-    }
-    Game.draw();
-    requestAnimationFrame(Game.run);
+        list = [];
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(contents,"text/xml");
+        onLoadLevel(xmlDoc);
+    };
+    reader.readAsText(file);
 }
 
+document.getElementById('svg').addEventListener('change', readSingleFile, false);
 
+//check to see if svg element (elem) matches a color (col)
+function checkColour(elem, col) {
+  if (elem === null)
+      return false;
+  else if (elem.style.fill != null){
+      if (elem.style.fill.toUpperCase() === col)
+            return true;
+  }
+  else if (elem.getAttribute("fill") != null){
+      if (elem.getAttribute("fill").toUpperCase() === col)
+            return true;
+  }
+  else
+      return false;
+}
 
-Game.initialize = function() {
-};
+//Load an XML document (xmlDoc)
+function onLoadLevel(xmlDoc) {
+    var x = xmlDoc.getElementsByTagName("rect");
+    var obj_missing_path = [];
+    for (i = 0; i < x.length; i++) {
+        if (x[i].style.fill === "rgb(0, 0, 0)" || checkColour(x[i],"#000000")){
+            list.push(new objt(
+            Math.floor(x[i].getAttribute("x")),
+            Math.floor(x[i].getAttribute("y")),
+            Math.floor(x[i].getAttribute("width")),
+            Math.floor(x[i].getAttribute("height"))
+            ));
+        }else if (x[i].style.fill === "rgb(0, 255, 0)" || checkColour(x[i],"#00FF00")){
+            hero = new player(
+            Math.floor(x[i].getAttribute("x")),
+            Math.floor(x[i].getAttribute("y")),
+            Math.floor(x[i].getAttribute("width")),
+            Math.floor(x[i].getAttribute("height"))
+            );
+            list.push(hero);
+        }else if (x[i].style.fill === "rgb(255, 0, 255)" || checkColour(x[i],"#FF00FF")){
+            list.push(new jtBlock(
+            Math.floor(x[i].getAttribute("x")),
+            Math.floor(x[i].getAttribute("y")),
+            Math.floor(x[i].getAttribute("width")),
+            Math.floor(x[i].getAttribute("height"))
+            ));
+        }else if (x[i].style.fill === "rgb(0, 0, 255)" || checkColour(x[i],"#0000FF")){
+            var obj = new moveBlock(
+            Math.floor(x[i].getAttribute("x")),
+            Math.floor(x[i].getAttribute("y")),
+            Math.floor(x[i].getAttribute("width")),
+            Math.floor(x[i].getAttribute("height"))
+            );
+            obj_missing_path.push(obj);
+            list.push(obj);
+            console.log("blok");
+        }else if (x[i].style.fill === "none"){
+            if (x[i].style.stroke === "rgb(255, 0, 0)" || checkColour(x[i],"#FF0000")){
+                cam.boundaries.push(new camBoundary(
+                Math.floor(x[i].getAttribute("x")),
+                Math.floor(x[i].getAttribute("y")),
+                Math.floor(x[i].getAttribute("width")),
+                Math.floor(x[i].getAttribute("height")),
+                2
+                ));
+            }else if (x[i].style.stroke === "rgb(255, 255, 0)" || checkColour(x[i],"#FFFF00")){
+                cam.boundaries.push(new camBoundary(
+                Math.floor(x[i].getAttribute("x")),
+                Math.floor(x[i].getAttribute("y")),
+                Math.floor(x[i].getAttribute("width")),
+                Math.floor(x[i].getAttribute("height")),
+                1
+                ));
+            }
+        }
 
-////////////////////////////////////////////////////////////////////////////////
-// Event loop
-////////////////////////////////////////////////////////////////////////////////
-window.onload = function() {
-
-    //get & set canvas
-    cam = new camera(0.05);
-    rectx = {x: 0, y: 0, width: 1600, height: 1000};
-    cam.bound = rectx;
-
-
-
-    c.canvas.width = screen_width;
-    c.canvas.height = screen_height;
-
-    var idx = 0;
-    function addSection(list,type){
-        objtList.push(new section(idx++,list,type));
     }
 
-    addSection([285,552,287,592,331,574,327,541],"dirt");
-    addSection([282,552,285,592,224,590,236,552],"dirt");
-    addSection([188,544,178,584,223,590,236,552],"dirt");
-
-    addSection([320,161,324,105,322,1,345,0,347,105,347,164,344,168],"branch");
-    addSection([218,179,213,83,195,52,178,24,171,11,168,0,143,0,147,29,170,75,183,91,196,118,208,148],"branch");
-    addSection([294,245,311,206,321,161,345,168,338,202,324,236,306,270,295,304,294,273],"branch");
-
-    addSection([206,2,213,82,218,176,253,171,292,173,289,87,287,24,286,1],"trunk");
-    addSection([218,177,221,330,296,329,292,173,253,171],"trunk");
-    addSection([215,456,221,330,297,328,299,454],"trunk");
-    addSection([184,541,210,494,214,454,299,455,312,504,333,539,289,551,257,553,208,547],"trunk");
-
-    addSection([191,525,180,576,0,586,1,525],"shade");
-    addSection([326,529,332,573,523,586,521,521,409,525],"shade");
-    requestAnimationFrame(Game.run);
-};
-
-document.onclick = function(e){
-    for (var i = 0; i < objtList.length; i++) {
-        var o = objtList[i];
-        if (o.bound != "poly_sect")
-            continue;
-
-        var pt = mouse;
-        if (isPointInRect(pt, o.x, o.y, o.width, o.height)){
-            if (isPointInPoly(o.points, pt)){
-                console.log("OI!");
-                selected = o;
+    x = xmlDoc.getElementsByTagName("path");
+    for (i = 0; i < x.length; i++) {
+        if (x[i].style.fill === "rgb(0, 0, 0)" || checkColour(x[i],"#000000")){
+            var path = x[i].getAttribute("d");
+            if (path != "" && path != null){
+                var p = extractPoints(parse(path));
+                list.push(new polyBlock(p[0],p[1]));
+            }
+        }else if (x[i].style.fill === "none"){
+            var path = x[i].getAttribute("d");
+            if (path != "" && path != null){
+                var p = extractPoints(parse(path));
+                var mp = new movePath(p[0],p[1],parseInt(x[i].style.strokeWidth,10));
+                list.push(mp);
+                console.log("path");
+                if (obj_missing_path){
+                    obj_missing_path[0].path = mp;
+                    obj_missing_path.shift();
+                }
             }
         }
     }
 }
 
- document.onmousemove = function (e) {
-    var rect = cvs.getBoundingClientRect();
-    emouse = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-    //emouse = {x: e.offsetX, y: e.offsetY};
- }
+////////////////////////////////////////////////////////////////////////////////
+// Event loop
+////////////////////////////////////////////////////////////////////////////////
 
+window.onload = function() {
+
+    //get & set canvas
+    var c = document.getElementById('screen').getContext('2d');
+    c.canvas.width = screen_width;
+    c.canvas.height = screen_height;
+
+    //load first level svg
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", "levels/lvl0.svg", true);
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState== 4 && xmlhttp.status == 200) {
+            onLoadLevel(xmlhttp.responseXML);
+        }
+    };
+    xmlhttp.send(null);
+
+    cam = new camera(0.15);
+    //MAIN GAME LOOP
+    setInterval(function() {
+        time++;
+        f.innerHTML = "FPS: " + fps.getFPS();
+
+        //save canvas settings
+        c.save();
+        //clear screen & draw background
+        //c.clearRect(0,0,screen_width,screen_height);
+        c.fillStyle = "DarkBlue";
+        c.fillRect(0,0,screen_width,screen_height);
+
+        //draw objects relative to centered camera
+        c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
+
+        canvas = c;
+        //draw objects TODO: draw objects by depth property
+        for (var i = 0; i < list.length; i++) {
+            var o = list[i];
+            o.update(list, keys);
+            if (checkOnScreen(o,cam)){
+                o.draw(c);
+            }
+        }
+
+        //TODO:remove
+        for (var i = 0; i < cam.boundaries.length; i++) {
+            cam.boundaries[i].draw(c)
+        }
+
+        //restore saved canvas
+        c.restore();
+
+    }, 1000 / 60); //60fps TODO: find better/faster way to do this
+};
+
+
+function actionForEvent(e) {
+    var key = e.which;
+    for (var i = 0; i < key_codes.length; i++) {
+        if (key == key_codes[i])
+            return i;
+    }
+    return null;
+}
+
+window.onkeydown = function(e) {
+    var action = actionForEvent(e);
+    keys[action] = true;
+};
+
+window.onkeyup = function(e) {
+    var action = actionForEvent(e);
+    keys[action] = false;
+};
