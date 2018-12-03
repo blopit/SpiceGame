@@ -18,7 +18,7 @@ function player(x, y, width, height) {
     this.xscale = 1;            //horizontal scale
 
     var image = new Image();
-    image.src = "http://i.imgur.com/26loGzM.png";
+    image.src = "26loGzM.png";
 
     this.sprite = sprite({
         width: 90,
