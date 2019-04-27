@@ -19,14 +19,15 @@ require("scripts/svg.js");
 require("scripts/computation.js");
 require("scripts/sprite.js");
 require("scripts/camera.js");
+require("scripts/fishbird.js");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Globals
 ////////////////////////////////////////////////////////////////////////////////
 
 //screen globals
-screen_width = 800;
-screen_height = 600;
+screen_width = 1280;
+screen_height = 720;
 screen_bound = 128;
 
 //Global initializations
@@ -35,7 +36,7 @@ list = [];
 xmlhttp = null;
 hero = null;  //player
 
-var fps = {
+/*var fps = {
     startTime : 0,
     frameNumber : 0,
     getFPS : function(){
@@ -50,7 +51,7 @@ var fps = {
         return result;
     }
 };
-var f = document.querySelector("#fps");
+var f = document.querySelector("#fps");*/
 
 grav = 0.5;             //gravity
 timefctr = 1.0;         //time factor
@@ -63,6 +64,9 @@ canvas = null;
 keys = [false,false,false,false,false,false,false,
 0,0,0,0,0,0,0,
 0,0,0,0,0,0,0];
+
+maxairmeter = airmeter = maxwatermeter = watermeter = 300;
+stepstoair = stepstowater = 0;
 
 //up_key, down_key, left_key, right_key, space_key, space_key, space_key
 key_codes = [38, 40, 37, 39, 32 ,32 ,32] // key codes
@@ -95,7 +99,7 @@ function readSingleFile(e) {
     reader.readAsText(file);
 }
 
-document.getElementById('svg').addEventListener('change', readSingleFile, false);
+//document.getElementById('svg').addEventListener('change', readSingleFile, false);
 
 //check to see if svg element (elem) matches a color (col)
 function checkColour(elem, col) {
@@ -200,6 +204,17 @@ function onLoadLevel(xmlDoc) {
 // Event loop
 ////////////////////////////////////////////////////////////////////////////////
 
+
+function doMouseDown(e) {
+    var action = actionForEvent(e);
+    keys[4] = true;
+};
+
+function doMouseUp(e) {
+    var action = actionForEvent(e);
+    keys[4] = false;
+};
+
 window.onload = function() {
 
     //get & set canvas
@@ -207,31 +222,95 @@ window.onload = function() {
     c.canvas.width = screen_width;
     c.canvas.height = screen_height;
 
-    //load first level svg
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", "levels/lvl0.svg", true);
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState== 4 && xmlhttp.status == 200) {
-            onLoadLevel(xmlhttp.responseXML);
-        }
-    };
-    xmlhttp.send(null);
+    var cx = document.getElementById('screen');
+    cx.addEventListener("mousedown", doMouseDown, false);
+    cx.addEventListener("mouseup", doMouseUp, false);
+    cx.addEventListener("touchstart", doMouseDown, false);
+    cx.addEventListener("touchend", doMouseUp, false);
+
+
+    /*
+   //load first level svg
+   xmlhttp = new XMLHttpRequest();
+   xmlhttp.open("GET", "levels/lvl0.svg", true);
+   xmlhttp.onreadystatechange = function() {
+       if (xmlhttp.readyState== 4 && xmlhttp.status == 200) {
+           onLoadLevel(xmlhttp.responseXML);
+       }
+   };
+   xmlhttp.send(null);*/
+
+    hero = new fishbird(0, 0);
+    list.push(hero);
 
     cam = new camera(0.15);
+
+    var len = 3000;
+
+    var grd1 = c.createLinearGradient(0, 0, 0, -len);
+    grd1.addColorStop(0, "skyblue");
+    grd1.addColorStop(1, "white");
+    //grd1.addColorStop(1, "black");
+
+    var grd2 = c.createLinearGradient(0, 0, 0, len);
+    grd2.addColorStop(0, "turquoise");
+    grd2.addColorStop(1, "black");
+
     //MAIN GAME LOOP
     setInterval(function() {
         time++;
-        f.innerHTML = "FPS: " + fps.getFPS();
+        //f.innerHTML = "FPS: " + fps.getFPS();
 
         //save canvas settings
         c.save();
         //clear screen & draw background
         //c.clearRect(0,0,screen_width,screen_height);
-        c.fillStyle = "DarkBlue";
+        c.fillStyle = "LightGray";
         c.fillRect(0,0,screen_width,screen_height);
+
+        c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
+        c.fillStyle = grd1;
+        c.fillRect(hero.x-screen_width,0,screen_width*2,-len);
+        c.fillStyle = grd2;
+        c.fillRect(hero.x-screen_width,0,screen_width*2,len);
+        c.translate(-cam.width/2+cam.cx,-cam.height/2+cam.cy);
+
+        c.beginPath();
+        c.lineWidth = 20;
+        c.strokeStyle = "white";
+        c.moveTo(0, screen_height);
+        c.lineTo(screen_width * airmeter/maxairmeter, screen_height);
+        c.stroke();
+        c.beginPath();
+        c.strokeStyle = "red";
+        c.moveTo(screen_width * stepstoair/maxairmeter - 20, screen_height);
+        c.lineTo(screen_width * stepstoair/maxairmeter, screen_height);
+        c.stroke();
+
+        c.beginPath();
+        c.lineWidth = 20;
+        c.strokeStyle = "blue";
+        c.moveTo(0, 0);
+        c.lineTo(screen_width * watermeter/maxwatermeter, 0);
+        c.stroke();
+        c.beginPath();
+        c.strokeStyle = "red";
+        c.moveTo(screen_width * stepstowater/maxwatermeter - 20, 0);
+        c.lineTo(screen_width * stepstowater/maxwatermeter, 0);
+        c.stroke();
 
         //draw objects relative to centered camera
         c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
+
+        c.beginPath();
+        c.lineWidth = 5;
+        c.strokeStyle = "white";
+        c.moveTo(-3000000, 0);
+        c.lineTo(3000000, 0);
+        c.stroke();
+        c.lineWidth = 1;
+
+
 
         canvas = c;
         //draw objects TODO: draw objects by depth property
@@ -251,7 +330,7 @@ window.onload = function() {
         //restore saved canvas
         c.restore();
 
-    }, 1000 / 60); //60fps TODO: find better/faster way to do this
+    }, 1000.0 / 60.0); //60fps TODO: find better/faster way to do this
 };
 
 

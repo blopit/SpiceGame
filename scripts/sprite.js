@@ -12,7 +12,7 @@ function sprite (options) {
         that.image = options.image;
         that.vert = options.vert || false;
 
-        that.render = function (c,x,y,frame,xscale,yscale) {
+        that.render = function (c,x,y,frame,xscale,yscale,rotation) {
             while (frame < 0){
                 frame += numberframes;
             }
@@ -20,10 +20,12 @@ function sprite (options) {
             var f  = Math.floor(frame)%numberframes;
             xscale = xscale || 1;
             yscale = yscale || 1;
+            rotation = rotation || 0;
 
             c.save();
             c.translate(x,y);
             c.scale(xscale,yscale);
+            c.rotate(-rotation * 3.14159/180.0);
 
             c.drawImage(
                 that.image,
