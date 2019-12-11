@@ -13,6 +13,7 @@ function display(x, y, width, height) {
     this.frame = 0;
     this.depth = 0; //TODO: implement
     this.on_screen = true;
+    this.deleted = false;
 }
 
 //draw called for all visible objects on screen

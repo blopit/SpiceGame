@@ -1,10 +1,5 @@
 
 
-function solve(a, b, c) {
-    var result = (-1 * b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
-    var result2 = (-1 * b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
-    return [result, result2];
-}
 
 var maxammo = 30.0;
 function fishbird(x, y) {
@@ -14,34 +9,21 @@ function fishbird(x, y) {
     this.rotation = 0;
 
     this.vsp = 0;
-    this.hsp = 8;
+    this.hsp = 0;
+    this.speed = 0;
 
     this.ammo = -1;
+    this.maxammo = 60;
     this.released = true;
     this.pressing = false;
 
-    this.releasedBefore = 0;
-    this.releasedAfter = 0;
-
-    this.lowest = 0;
-    this.highest = 0;
-
-    this.w = 0;
-    this.sp = 0;
-
-    this.boost = 0;
-    this.maxboost = 150;
-    this.boostmult = 2.0;
-
-    this.justdove = false;
-
-    this.trail = new Array()
+    this.trail = new Array();
     this.trail.push = function (){
         if (this.length >= 120) {
             this.shift();
         }
         return Array.prototype.push.apply(this,arguments);
-    }
+    };
     this.frame = 0;
     this.xscale = 1;
 
@@ -60,6 +42,8 @@ function fishbird(x, y) {
         yoff: 64,
         vert: false
     });
+
+    this.hearts = 4;
 }
 
 
@@ -111,13 +95,10 @@ fishbird.prototype.draw = function (c) {
     this.sprite.render(c,this.x+this.width/2,this.y+this.height/2,this.frame,
         this.xscale * 0.5,0.5,
         this.rotation);
+
+    c.fillText("0",mousepos.x, mousepos.y);
 };
 
-fishbird.prototype.boostLaunch = function () {
-    this.boost = 0.01 * Math.pow(this.vsp, 3);//this.maxboost;
-    this.vsp *= 1.2;
-    this.hsp *= 1.2;
-};
 
 function median(values){
     if(values.length ===0) return 0;
@@ -146,166 +127,58 @@ fishbird.prototype.rotateTo = function(direction, rate, easing) {
 };
 
 fishbird.prototype.update = function (b, keys) {
-    var threshold = 8;
-    this.ammo -= 1;
-    if (this.ammo < 0) this.ammo = 0;
 
-    this.boost -= 1;
-    if (this.boost < 0) this.boost = 0;
-
-    this.releasedBefore -= 1;
-    if (this.releasedBefore < 0) this.releasedBefore = 0;
-
-    this.releasedAfter -= 1;
-    if (this.releasedAfter < 0) this.releasedAfter = 0;
-
-    var mult = 1.0;
-    if (this.boost > 0) mult = this.boostmult;
-
-    var gravvar = 0.5;
-    if (this.y < 0) {
-        gravity = gravvar;
+    if (this.ammo <= 0 && keys[4]) {
+        bullet = new heartbullet(this.x, this.y, 100, 100);
+        list.push(bullet);
+        this.ammo = this.maxammo;
     } else {
-        gravity = -gravvar;
+        this.ammo -= 1;
     }
 
-    this.vsp += gravity;
+    var friction = 0.5;
+    var acc = 1.0;
+    var maxspd = 8.0;
 
-    var targspeed = 8 * mult;
-    var tacc = 1;
-    if (this.hsp < targspeed - tacc) {
-        this.hsp += tacc;
-    } else if (this.hsp < targspeed) {
-        this.hsp = targspeed
+    var dx = 0;
+    var dy = 0;
+    if (keys[0] && !keys[1]) {
+        dy -= 1;
+    } else if (keys[1] && !keys[0]) {
+        dy += 1;
+    }
+    if (keys[2] && !keys[3]) {
+        dx -= 1;
+    } else if (keys[3] && !keys[2]) {
+        dx += 1;
     }
 
-    var friction = 0;
-    var afric = 0.05;
-    var wfric = 0.15;
-
-
-    if (keys[4]) {
-        this.pressing = true;
-    } else if (this.pressing == true) {
-        //released
-        this.pressing = false;
-
-        var goAhead = false;
-        if (this.vsp > 10) {
-            if (this.y < 0){
-                this.releasedBefore = threshold;
-            }
-            if (this.releasedAfter > 0) {
-                this.releasedAfter = 0;
-                this.boostLaunch();
-            }
+    var angle = Math.atan2(dy, dx);
+    if (dy != 0 || dx != 0) {
+        cspeed = Math.sqrt(Math.pow(this.vsp,2) + Math.pow(this.hsp,2));
+        aced = 0;
+        if (cspeed + acc < maxspd) {
+            aced = acc;
+        } else if (cspeed < maxspd) {
+            aced = maxspd - cspeed;
         }
+        this.vsp += aced * Math.sin(angle);
+        this.hsp += aced * Math.cos(angle);
+
+    }
+    speed = Math.sqrt(Math.pow(this.vsp,2) + Math.pow(this.hsp,2));
+    if (speed > 0) {
+        friced = (speed - friction);
+        if (friced < 0) friced = 0;
+        factor = friced / speed;
+        this.vsp *= factor;
+        this.hsp *= factor;
     }
 
-    if (this.y < 0) {
-
-        if (this.ammo > 20) {
-            this.frame = 1;
-        } else {
-            this.frame = 0;
-        }
-
-        this.justdove = false;
-        //AIR
-        this.rotation = this.rotateTo(0,10, 0.5);
-        friction = afric;
-        airmeter = maxairmeter;
-        if (this.y < -64) {
-            watermeter -= 1;
-        }
-
-        if (!keys[4]) {
-            this.released = true;
-        } else if (this.released == true) {
-            this.released = false;
-
-            this.vsp = -10 * (1 - (this.ammo / maxammo)) * mult;
-            this.ammo = maxammo;
-        }
-
-        var a = (0.5) * (gravvar-friction);
-        var b = this.vsp;
-        var c = this.y;
-        stepstowater = solve(a, b, c)[0];
-
-    } else {
-        this.frame = 0;
-        this.rotation = this.rotateTo(Math.atan2(-this.vsp, this.hsp) * 180.0/3.14159, 10, 0.5);
-
-        if (!keys[4]) {
-            this.released = true;
-        } else if (this.released == true) {
-            this.released = false;
-        }
-
-        if (this.justdove == false) {
-            this.justdove = true;
-            this.releasedAfter = threshold;
-            if (this.releasedBefore > 0) {
-                this.releasedBefore = 0;
-                this.boostLaunch();
-            }
-        }
-        //WATER
-        friction = wfric;
-        watermeter = maxwatermeter;
-        if (this.y > 64) {
-            airmeter -= 1;
-        }
-
-
-
-        var max = 4 * this.boostmult;
-        var acc = 1;
-        if (keys[4]) {
-            this.frame = 2;
-            if (this.vsp < max - acc) {
-                this.vsp += acc;
-            } else if (this.vsp < max){
-                this.vsp = max;
-            }
-
-        }
-
-        var a = (0.5) * (-gravvar+friction);
-        var b = this.vsp;
-        var c = this.y;
-        stepstoair = solve(a, b, c)[1];
-    }
-
-    this.vsp = fric(this.vsp, friction);
-    this.hsp = fric(this.hsp, friction);
 
     this.x += this.hsp;
     this.y += this.vsp;
 
-    if (this.vsp < 0) {
-        this.w -= 5;
-    } else {
-        this.w += 5
-    }
-    if (this.w > 200) {
-        this.w = 200;
-    }
-    if (this.w < -200) {
-        this.w = -200;
-    }
-
-    cam.spring = 0.15 + 0.35 * Math.abs(this.w)/200;
-
-    cam.springTo(this.x + 500, this.y);
-
-
-    if (this.y < this.highest) {
-        this.highest = this.y;
-    } else if (this.y > this.lowest) {
-        this.lowest = this.y;
-    }
-
+    cam.springTo(this.x, this.y);
 
 };

@@ -20,6 +20,7 @@ require("scripts/computation.js");
 require("scripts/sprite.js");
 require("scripts/camera.js");
 require("scripts/fishbird.js");
+require("scripts/heartbullet.js");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -53,7 +54,6 @@ hero = null;  //player
 };
 var f = document.querySelector("#fps");*/
 
-grav = 0.5;             //gravity
 timefctr = 1.0;         //time factor
 canvas = null;
 
@@ -65,12 +65,10 @@ keys = [false,false,false,false,false,false,false,
 0,0,0,0,0,0,0,
 0,0,0,0,0,0,0];
 
-maxairmeter = airmeter = maxwatermeter = watermeter = 300;
-stepstoair = stepstowater = 0;
-
 //up_key, down_key, left_key, right_key, space_key, space_key, space_key
-key_codes = [38, 40, 37, 39, 32 ,32 ,32] // key codes
-
+key_codes = [87, 83, 65, 68, 32 ,32 ,32] // key codes
+mousepos = {x:0, y:0};
+evnt = null;
 
 ////////////////////////////////////////////////////////////////////////////////
 // SVG FILE READER
@@ -215,6 +213,25 @@ function doMouseUp(e) {
     keys[4] = false;
 };
 
+
+var cc = document.getElementById('screen');
+function updateMouse(e) {
+    if (e == null) {
+        e = evnt;
+    } else {
+        evnt = e;
+    }
+    mousepos = getMousePos(cc, e);
+}
+
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width + cam.x,
+        y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height + cam.y
+    };
+}
+
 window.onload = function() {
 
     //get & set canvas
@@ -228,7 +245,7 @@ window.onload = function() {
     cx.addEventListener("touchstart", doMouseDown, false);
     cx.addEventListener("touchend", doMouseUp, false);
 
-
+    window.addEventListener('mousemove', updateMouse, false);
     /*
    //load first level svg
    xmlhttp = new XMLHttpRequest();
@@ -259,6 +276,7 @@ window.onload = function() {
     //MAIN GAME LOOP
     setInterval(function() {
         time++;
+        if (evnt != null) updateMouse(null);
         //f.innerHTML = "FPS: " + fps.getFPS();
 
         //save canvas settings
@@ -274,30 +292,6 @@ window.onload = function() {
         c.fillStyle = grd2;
         c.fillRect(hero.x-screen_width,0,screen_width*2,len);
         c.translate(-cam.width/2+cam.cx,-cam.height/2+cam.cy);
-
-        c.beginPath();
-        c.lineWidth = 20;
-        c.strokeStyle = "white";
-        c.moveTo(0, screen_height);
-        c.lineTo(screen_width * airmeter/maxairmeter, screen_height);
-        c.stroke();
-        c.beginPath();
-        c.strokeStyle = "red";
-        c.moveTo(screen_width * stepstoair/maxairmeter - 20, screen_height);
-        c.lineTo(screen_width * stepstoair/maxairmeter, screen_height);
-        c.stroke();
-
-        c.beginPath();
-        c.lineWidth = 20;
-        c.strokeStyle = "blue";
-        c.moveTo(0, 0);
-        c.lineTo(screen_width * watermeter/maxwatermeter, 0);
-        c.stroke();
-        c.beginPath();
-        c.strokeStyle = "red";
-        c.moveTo(screen_width * stepstowater/maxwatermeter - 20, 0);
-        c.lineTo(screen_width * stepstowater/maxwatermeter, 0);
-        c.stroke();
 
         //draw objects relative to centered camera
         c.translate(cam.width/2-cam.cx,cam.height/2-cam.cy);
